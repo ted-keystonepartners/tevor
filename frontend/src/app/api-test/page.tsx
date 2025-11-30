@@ -60,7 +60,7 @@ export default function ApiTestPage() {
         <div className="bg-gray-800 rounded-lg p-6 mb-6">
           <h2 className="text-xl font-semibold mb-4">Configuration</h2>
           <div className="space-y-2">
-            <p><strong>Frontend URL:</strong> {window.location.origin}</p>
+            <p><strong>Frontend URL:</strong> {typeof window !== 'undefined' ? window.location.origin : 'Loading...'}</p>
             <p><strong>Backend API URL:</strong> {apiUrl}</p>
             <p><strong>Environment:</strong> {process.env.NODE_ENV}</p>
           </div>
