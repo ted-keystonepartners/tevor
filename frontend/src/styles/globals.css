@@ -1,0 +1,384 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css');
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  font-family: 'Pretendard Variable', Pretendard, -apple-system, system-ui, sans-serif;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  color: #f9fafb;
+  background: #111827;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a1a1a1;
+}
+
+/* Loading animation */
+.loading-dots {
+  display: inline-block;
+  position: relative;
+  width: 40px;
+  height: 10px;
+}
+
+.loading-dots div {
+  position: absolute;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #2563eb;
+  animation-timing-function: cubic-bezier(0, 1, 1, 0);
+  transform: translateY(-50%);
+}
+
+.loading-dots div:nth-child(1) {
+  left: 4px;
+  animation: loading-dots1 0.6s infinite;
+}
+
+.loading-dots div:nth-child(2) {
+  left: 4px;
+  animation: loading-dots2 0.6s infinite;
+}
+
+.loading-dots div:nth-child(3) {
+  left: 16px;
+  animation: loading-dots2 0.6s infinite;
+}
+
+.loading-dots div:nth-child(4) {
+  left: 28px;
+  animation: loading-dots3 0.6s infinite;
+}
+
+@keyframes loading-dots1 {
+  0% { transform: scale(0) translateY(-50%); }
+  100% { transform: scale(1) translateY(-50%); }
+}
+
+@keyframes loading-dots3 {
+  0% { transform: scale(1) translateY(-50%); }
+  100% { transform: scale(0) translateY(-50%); }
+}
+
+@keyframes loading-dots2 {
+  0% { transform: translate(0, -50%); }
+  100% { transform: translate(12px, -50%); }
+}
+
+/* 모바일 메뉴 애니메이션 */
+@keyframes fade-in {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes slide-in-right {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(0); }
+}
+
+@keyframes slide-in-left {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(0); }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.2s ease-out;
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.3s ease-out;
+}
+
+.animate-slide-in-left {
+  animation: slide-in-left 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* GPT 스타일 채팅 애니메이션 */
+@keyframes push-up {
+  0% { 
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  100% { 
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-push-up {
+  animation: push-up 0.3s ease-out;
+}
+
+/* GPT 스타일 사용자 메시지 - 나타나면서 동시에 위로 */
+@keyframes user-message-appear {
+  0% { 
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% { 
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-user-message {
+  animation: user-message-appear 0.2s ease-out forwards;
+}
+
+/* 메뉴 애니메이션 */
+@keyframes slide-up {
+  0% { 
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  100% { 
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-down {
+  0% { 
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% { 
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.animate-slide-down {
+  animation: slide-down 0.15s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* 이미지 프리뷰 스크롤바 숨기기 */
+.image-preview-scroll {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* Internet Explorer 10+ */
+}
+
+.image-preview-scroll::-webkit-scrollbar {
+  display: none; /* WebKit */
+}
+
+/* 서비스 버튼 페이드인 애니메이션 */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+/* 토스 스타일 모달 애니메이션 */
+@keyframes scale-up {
+  0% { 
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  100% { 
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-scale-up {
+  animation: scale-up 0.2s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* 토스 스타일 버튼 호버 효과 */
+.hover-lift {
+  transition: all 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+}
+
+/* 컬러 애니메이션 */
+@keyframes color-shift {
+  0%, 100% {
+    filter: hue-rotate(0deg) saturate(100%) brightness(100%);
+  }
+  25% {
+    filter: hue-rotate(30deg) saturate(110%) brightness(105%);
+  }
+  50% {
+    filter: hue-rotate(-30deg) saturate(120%) brightness(110%);
+  }
+  75% {
+    filter: hue-rotate(15deg) saturate(105%) brightness(102%);
+  }
+}
+
+@keyframes color-shift-reverse {
+  0%, 100% {
+    filter: hue-rotate(0deg) saturate(100%) brightness(100%);
+  }
+  25% {
+    filter: hue-rotate(-20deg) saturate(115%) brightness(108%);
+  }
+  50% {
+    filter: hue-rotate(40deg) saturate(110%) brightness(105%);
+  }
+  75% {
+    filter: hue-rotate(-10deg) saturate(108%) brightness(103%);
+  }
+}
+
+@keyframes pulse-color-1 {
+  0%, 100% {
+    filter: hue-rotate(0deg) saturate(100%) brightness(100%);
+    opacity: 1;
+  }
+  33% {
+    filter: hue-rotate(30deg) saturate(120%) brightness(110%);
+    opacity: 0.9;
+  }
+  66% {
+    filter: hue-rotate(-30deg) saturate(110%) brightness(105%);
+    opacity: 0.95;
+  }
+}
+
+@keyframes pulse-color-2 {
+  0%, 100% {
+    filter: hue-rotate(0deg) saturate(100%) brightness(100%);
+    opacity: 1;
+  }
+  33% {
+    filter: hue-rotate(-20deg) saturate(115%) brightness(108%);
+    opacity: 0.95;
+  }
+  66% {
+    filter: hue-rotate(40deg) saturate(110%) brightness(105%);
+    opacity: 0.9;
+  }
+}
+
+@keyframes pulse-color-3 {
+  0%, 100% {
+    filter: hue-rotate(0deg) saturate(100%) brightness(100%);
+    opacity: 0.2;
+  }
+  33% {
+    filter: hue-rotate(120deg) saturate(125%) brightness(112%);
+    opacity: 0.26;
+  }
+  66% {
+    filter: hue-rotate(-90deg) saturate(135%) brightness(105%);
+    opacity: 0.23;
+  }
+}
+
+.animate-color-shift {
+  animation: color-shift 15s ease-in-out infinite;
+}
+
+.animate-color-shift-reverse {
+  animation: color-shift-reverse 20s ease-in-out infinite;
+}
+
+.animate-pulse-color-1 {
+  animation: pulse-color-1 12s ease-in-out infinite;
+}
+
+.animate-pulse-color-2 {
+  animation: pulse-color-2 15s ease-in-out infinite;
+  animation-delay: 2s;
+}
+
+.animate-pulse-color-3 {
+  animation: pulse-color-3 18s ease-in-out infinite;
+  animation-delay: 4s;
+}
+
+/* 부드러운 플로팅 애니메이션 */
+@keyframes float-1 {
+  0%, 100% {
+    transform: translate(0, 0);
+  }
+  25% {
+    transform: translate(100px, -50px);
+  }
+  50% {
+    transform: translate(-50px, 30px);
+  }
+  75% {
+    transform: translate(50px, 60px);
+  }
+}
+
+@keyframes float-2 {
+  0%, 100% {
+    transform: translate(0, 0);
+  }
+  25% {
+    transform: translate(-80px, 40px);
+  }
+  50% {
+    transform: translate(60px, -30px);
+  }
+  75% {
+    transform: translate(-40px, -60px);
+  }
+}
+
+.animate-float-1 {
+  animation: float-1 20s ease-in-out infinite;
+}
+
+.animate-float-2 {
+  animation: float-2 25s ease-in-out infinite;
+}

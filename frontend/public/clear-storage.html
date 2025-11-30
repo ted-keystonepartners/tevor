@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Storage Cleaner</title>
+</head>
+<body>
+    <h1>🧹 Storage Cleaner</h1>
+    <div id="status"></div>
+    
+    <script>
+        // localStorage 정리
+        const statusDiv = document.getElementById('status');
+        
+        const allKeys = Object.keys(localStorage);
+        const sessionCount = sessionStorage.length;
+        
+        statusDiv.innerHTML = `<p>🔍 총 ${allKeys.length}개의 localStorage 항목과 ${sessionCount}개의 sessionStorage 항목을 정리중...</p>`;
+        
+        // 모든 localStorage 완전 삭제
+        localStorage.clear();
+        
+        // sessionStorage도 정리
+        sessionStorage.clear();
+        
+        statusDiv.innerHTML = `
+            <div style="color: green;">
+                <h2>✅ 완전 정리 완료!</h2>
+                <p>🗑️ localStorage: ${allKeys.length}개 항목 모두 삭제</p>
+                <p>🗑️ sessionStorage: ${sessionCount}개 항목 모두 삭제</p>
+                <p>🎯 모든 브라우저 저장소가 깨끗하게 정리되었습니다!</p>
+                <button onclick="window.location.href='/'" style="margin-top: 10px; padding: 10px 20px; background: blue; color: white; border: none; border-radius: 4px;">홈으로 이동</button>
+            </div>
+        `;
+        
+        console.log('✅ Storage cleanup completed');
+    </script>
+</body>
+</html>

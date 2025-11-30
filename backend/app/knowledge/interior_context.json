@@ -1,0 +1,113 @@
+{
+  "construction_stages": {
+    "before": {
+      "description": "시공 전 상태",
+      "keywords": ["원상태", "기존", "시공전", "철거전", "작업전"],
+      "next_stage": "demolition"
+    },
+    "demolition": {
+      "description": "철거 작업",
+      "keywords": ["철거", "해체", "제거", "뜯어내기"],
+      "next_stage": "electrical",
+      "duration": "1-3일",
+      "precautions": ["안전장비 착용", "분진 방지", "소음 주의"]
+    },
+    "electrical": {
+      "description": "전기 공사",
+      "keywords": ["전기", "배선", "콘센트", "스위치", "조명"],
+      "next_stage": "plumbing",
+      "duration": "2-5일",
+      "precautions": ["전기 차단", "누전 확인", "접지 확인"]
+    },
+    "plumbing": {
+      "description": "설비 공사 (수도, 가스)",
+      "keywords": ["설비", "수도", "가스", "배관", "급수", "급탕"],
+      "next_stage": "flooring",
+      "duration": "2-4일",
+      "precautions": ["수압 테스트", "누수 확인", "가스 안전"]
+    },
+    "flooring": {
+      "description": "바닥재 시공",
+      "keywords": ["바닥", "마루", "타일", "장판", "석재"],
+      "next_stage": "wall_finish",
+      "duration": "3-7일",
+      "precautions": ["습도 조절", "온도 관리", "평활도 확인"]
+    },
+    "wall_finish": {
+      "description": "벽면 마감",
+      "keywords": ["벽지", "페인트", "타일", "석재", "마감재"],
+      "next_stage": "ceiling",
+      "duration": "2-5일",
+      "precautions": ["환기", "습도 조절", "접착력 확인"]
+    },
+    "ceiling": {
+      "description": "천장 마감",
+      "keywords": ["천장", "몰딩", "조명", "환기구"],
+      "next_stage": "final_touch",
+      "duration": "1-3일",
+      "precautions": ["안전 발판", "조명 연결", "환기 확인"]
+    },
+    "final_touch": {
+      "description": "마무리 작업",
+      "keywords": ["마무리", "청소", "점검", "완료"],
+      "next_stage": "after",
+      "duration": "1-2일",
+      "precautions": ["전체 점검", "청소", "하자 확인"]
+    },
+    "after": {
+      "description": "시공 완료 후",
+      "keywords": ["완료", "마감", "시공후", "완성", "최종"],
+      "next_stage": null
+    }
+  },
+  "common_issues": {
+    "mold": {
+      "description": "곰팡이 문제",
+      "solutions": ["환기 개선", "방수 처리", "제습", "곰팡이 제거제 사용"],
+      "prevention": ["습도 관리", "통풍", "정기 점검"]
+    },
+    "cracks": {
+      "description": "균열 문제",
+      "solutions": ["균열 보수재 사용", "구조 점검", "방수 처리"],
+      "types": ["구조균열", "건조수축균열", "온도균열"]
+    },
+    "water_damage": {
+      "description": "누수 문제",
+      "solutions": ["누수 원인 파악", "방수 처리", "배관 점검", "건조"],
+      "emergency": ["물 차단", "전기 차단", "응급 수리"]
+    },
+    "noise": {
+      "description": "소음 문제",
+      "solutions": ["방음재 시공", "작업 시간 조절", "이웃 양해", "저소음 장비 사용"]
+    }
+  },
+  "materials": {
+    "flooring": {
+      "hardwood": {"pros": ["고급스러움", "내구성"], "cons": ["높은 가격", "습도 민감"], "lifespan": "15-20년"},
+      "laminate": {"pros": ["경제적", "설치 용이"], "cons": ["습기 약함", "수리 어려움"], "lifespan": "10-15년"},
+      "tile": {"pros": ["내구성", "방수"], "cons": ["차가움", "미끄러움"], "lifespan": "20-30년"}
+    },
+    "paint": {
+      "water_based": {"pros": ["친환경", "빠른 건조"], "cons": ["내구성 약함"], "dry_time": "1-2시간"},
+      "oil_based": {"pros": ["내구성", "광택"], "cons": ["냄새", "긴 건조"], "dry_time": "6-8시간"}
+    }
+  },
+  "safety_guidelines": {
+    "general": ["안전모 착용", "안전화 착용", "작업복 착용", "환기 확보"],
+    "electrical": ["전기 차단", "절연장갑 착용", "검전기 사용", "누전차단기 확인"],
+    "demolition": ["방진마스크 착용", "보안경 착용", "소음 방지", "구조 안전 확인"],
+    "chemical": ["환기", "보호장구 착용", "화기 주의", "응급처치 준비"]
+  },
+  "quality_standards": {
+    "flooring": {
+      "levelness": "3mm 이하 차이",
+      "gap": "이음새 1mm 이하",
+      "moisture": "수분 함량 12% 이하"
+    },
+    "painting": {
+      "coverage": "균등한 도막 두께",
+      "finish": "붓자국 없음",
+      "color": "색상 일치도 95% 이상"
+    }
+  }
+}
