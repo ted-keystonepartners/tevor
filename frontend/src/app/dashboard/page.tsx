@@ -164,7 +164,7 @@ export default function DashboardPage() {
               )}
             </div>
 
-            {loading.isLoading ? (
+            {loading ? (
               <div className="flex items-center justify-center h-64">
                 <div className="flex gap-2">
                   <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
