@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 from sqlalchemy.future import select
 from typing import List, Optional
 import uuid
 from datetime import datetime
 
-from app.database import get_db
+from app.database import get_db, IS_ASYNC
 from app.models.project import Project
 from app.schemas.chat import ProjectCreate, ProjectResponse
 from app.services.archive_service import ArchiveService
@@ -15,7 +15,7 @@ router = APIRouter(prefix="/api/v1/projects", tags=["projects"])
 @router.post("/", response_model=ProjectResponse)
 async def create_project(
     project_data: ProjectCreate,
-    db: AsyncSession = Depends(get_db)
+    db = Depends(get_db)
 ):
     try:
         # 고유한 프로젝트 ID 생성
@@ -29,8 +29,12 @@ async def create_project(
         )
         
         db.add(new_project)
-        await db.commit()
-        await db.refresh(new_project)
+        if IS_ASYNC:
+            await db.commit()
+            await db.refresh(new_project)
+        else:
+            db.commit()
+            db.refresh(new_project)
         
 # 스토리지는 필요시에만 생성하도록 단순화
         
@@ -42,20 +46,26 @@ async def create_project(
         )
         
     except Exception as e:
-        await db.rollback()
+        if IS_ASYNC:
+            await db.rollback()
+        else:
+            db.rollback()
         print(f"Project creation error: {e}")
         raise HTTPException(status_code=500, detail=f"프로젝트 생성 실패: {str(e)}")
 
 @router.get("/{project_id}", response_model=ProjectResponse)
 async def get_project(
     project_id: str,
-    db: AsyncSession = Depends(get_db)
+    db = Depends(get_db)
 ):
     try:
-        result = await db.execute(
-            select(Project).where(Project.project_id == project_id)
-        )
-        project = result.scalar_one_or_none()
+        if IS_ASYNC:
+            result = await db.execute(
+                select(Project).where(Project.project_id == project_id)
+            )
+            project = result.scalar_one_or_none()
+        else:
+            project = db.query(Project).filter(Project.project_id == project_id).first()
         
         if not project:
             raise HTTPException(status_code=404, detail="프로젝트를 찾을 수 없습니다")
@@ -77,16 +87,19 @@ async def get_project(
 async def list_projects(
     skip: int = 0,
     limit: int = 50,
-    db: AsyncSession = Depends(get_db)
+    db = Depends(get_db)
 ):
     try:
-        result = await db.execute(
-            select(Project)
-            .order_by(Project.created_at.desc())
-            .offset(skip)
-            .limit(limit)
-        )
-        projects = result.scalars().all()
+        if IS_ASYNC:
+            result = await db.execute(
+                select(Project)
+                .order_by(Project.created_at.desc())
+                .offset(skip)
+                .limit(limit)
+            )
+            projects = result.scalars().all()
+        else:
+            projects = db.query(Project).order_by(Project.created_at.desc()).offset(skip).limit(limit).all()
         
         return [
             ProjectResponse(
@@ -105,21 +118,28 @@ async def list_projects(
 @router.delete("/{project_id}")
 async def delete_project(
     project_id: str,
-    db: AsyncSession = Depends(get_db)
+    db = Depends(get_db)
 ):
     try:
         # 프로젝트 존재 확인
-        result = await db.execute(
-            select(Project).where(Project.project_id == project_id)
-        )
-        project = result.scalar_one_or_none()
+        if IS_ASYNC:
+            result = await db.execute(
+                select(Project).where(Project.project_id == project_id)
+            )
+            project = result.scalar_one_or_none()
+        else:
+            project = db.query(Project).filter(Project.project_id == project_id).first()
         
         if not project:
             raise HTTPException(status_code=404, detail="프로젝트를 찾을 수 없습니다")
         
         # 데이터베이스에서 삭제
-        await db.delete(project)
-        await db.commit()
+        if IS_ASYNC:
+            await db.delete(project)
+            await db.commit()
+        else:
+            db.delete(project)
+            db.commit()
         
         # 스토리지에서 폴더 삭제는 추후 구현 (안전을 위해 수동 삭제 권장)
         
@@ -128,21 +148,27 @@ async def delete_project(
     except HTTPException:
         raise
     except Exception as e:
-        await db.rollback()
+        if IS_ASYNC:
+            await db.rollback()
+        else:
+            db.rollback()
         print(f"Project deletion error: {e}")
         raise HTTPException(status_code=500, detail=f"프로젝트 삭제 실패: {str(e)}")
 
 @router.get("/{project_id}/summary")
 async def get_project_summary(
     project_id: str,
-    db: AsyncSession = Depends(get_db)
+    db = Depends(get_db)
 ):
     try:
         # 프로젝트 존재 확인
-        result = await db.execute(
-            select(Project).where(Project.project_id == project_id)
-        )
-        project = result.scalar_one_or_none()
+        if IS_ASYNC:
+            result = await db.execute(
+                select(Project).where(Project.project_id == project_id)
+            )
+            project = result.scalar_one_or_none()
+        else:
+            project = db.query(Project).filter(Project.project_id == project_id).first()
         
         if not project:
             raise HTTPException(status_code=404, detail="프로젝트를 찾을 수 없습니다")
@@ -175,14 +201,17 @@ async def get_project_archive(
     project_id: str,
     space: Optional[str] = Query(None, description="공간 필터"),
     stage: Optional[str] = Query(None, description="단계 필터"),
-    db: AsyncSession = Depends(get_db)
+    db = Depends(get_db)
 ):
     try:
         # 프로젝트 존재 확인
-        result = await db.execute(
-            select(Project).where(Project.project_id == project_id)
-        )
-        project = result.scalar_one_or_none()
+        if IS_ASYNC:
+            result = await db.execute(
+                select(Project).where(Project.project_id == project_id)
+            )
+            project = result.scalar_one_or_none()
+        else:
+            project = db.query(Project).filter(Project.project_id == project_id).first()
         
         if not project:
             raise HTTPException(status_code=404, detail="프로젝트를 찾을 수 없습니다")

@@ -5,15 +5,14 @@
 """
 
 from fastapi import APIRouter, Depends, HTTPException, File, UploadFile, Form
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 from sqlalchemy.future import select
 from typing import Optional, Dict, Any
 import uuid
 import io
 
-from app.database import get_db
+from app.database import get_db, IS_ASYNC
 from app.models.project import Project
-from app.services.gemini_service import get_gemini_service
 from app.services.archive_service import archive_service
 from app.utils.file_validation import validate_upload_file
 
@@ -25,15 +24,18 @@ async def analyze_and_save_image(
     stage: str = Form(...),  # 사용자가 선택한 시공 단계
     caption: str = Form(""),
     image_file: UploadFile = File(...),
-    db: AsyncSession = Depends(get_db)
+    db = Depends(get_db)
 ):
     """이미지 분석 + 아카이브 저장을 한 번에 처리"""
     try:
         # 프로젝트 존재 확인
-        result = await db.execute(
-            select(Project).where(Project.project_id == project_id)
-        )
-        project = result.scalar_one_or_none()
+        if IS_ASYNC:
+            result = await db.execute(
+                select(Project).where(Project.project_id == project_id)
+            )
+            project = result.scalar_one_or_none()
+        else:
+            project = db.query(Project).filter(Project.project_id == project_id).first()
         
         if not project:
             raise HTTPException(
@@ -52,23 +54,11 @@ async def analyze_and_save_image(
         # 이미지 파일 읽기
         image_data = await image_file.read()
         
-        # Gemini로 이미지 분석
-        gemini_service = get_gemini_service()
-        analysis_result = await gemini_service.analyze_image(
-            image_file=image_data,
-            caption=caption
-        )
-        
-        if not analysis_result.get("success", False):
-            raise HTTPException(
-                status_code=500,
-                detail=f"이미지 분석 실패: {analysis_result.get('error', 'Unknown error')}"
-            )
-        
-        # 분석 결과에서 공간 정보 추출
-        space = analysis_result.get("space", {}).get("value", "기타")
-        confidence = analysis_result.get("space", {}).get("confidence", 0.5)
-        description = analysis_result.get("description", "")
+        # 이미지 분석은 임시로 비활성화 (Gemini 제거)
+        # TODO: GPT-4 Vision API로 교체 필요
+        space = "기타"
+        confidence = 0.5
+        description = caption if caption else "이미지 업로드"
         
         # 아카이브에 저장
         save_result = await archive_service.save_image(
@@ -95,7 +85,7 @@ async def analyze_and_save_image(
                 "stage": stage,
                 "description": description,
                 "confidence": confidence,
-                "model": analysis_result.get("model", "gemini-2.5-flash")
+                "model": "manual"
             },
             "archive": {
                 "filename": save_result.get("filename"),
@@ -118,15 +108,18 @@ async def get_project_archive(
     project_id: str,
     space: Optional[str] = None,
     stage: Optional[str] = None,
-    db: AsyncSession = Depends(get_db)
+    db = Depends(get_db)
 ):
     """프로젝트 아카이브 조회"""
     try:
         # 프로젝트 존재 확인
-        result = await db.execute(
-            select(Project).where(Project.project_id == project_id)
-        )
-        project = result.scalar_one_or_none()
+        if IS_ASYNC:
+            result = await db.execute(
+                select(Project).where(Project.project_id == project_id)
+            )
+            project = result.scalar_one_or_none()
+        else:
+            project = db.query(Project).filter(Project.project_id == project_id).first()
         
         if not project:
             raise HTTPException(
@@ -155,15 +148,18 @@ async def get_project_archive(
 async def delete_archived_image(
     project_id: str,
     filename: str,
-    db: AsyncSession = Depends(get_db)
+    db = Depends(get_db)
 ):
     """아카이브 이미지 삭제"""
     try:
         # 프로젝트 존재 확인
-        result = await db.execute(
-            select(Project).where(Project.project_id == project_id)
-        )
-        project = result.scalar_one_or_none()
+        if IS_ASYNC:
+            result = await db.execute(
+                select(Project).where(Project.project_id == project_id)
+            )
+            project = result.scalar_one_or_none()
+        else:
+            project = db.query(Project).filter(Project.project_id == project_id).first()
         
         if not project:
             raise HTTPException(

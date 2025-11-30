@@ -6,7 +6,7 @@
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 from sqlalchemy.future import select
 import json
 import asyncio
@@ -14,26 +14,29 @@ import uuid
 from datetime import datetime, timezone, timedelta
 from typing import AsyncGenerator
 
-from app.database import get_db
+from app.database import get_db, IS_ASYNC
 from app.models.project import Project
 from app.models.image_record import ChatMessage
 from app.schemas.chat import ChatRequest
-from app.services.gpt_service import get_gpt_service
+from app.services.gpt_service import GPTService
 
 router = APIRouter(prefix="/api/v2/chat", tags=["chat-stream"])
 
 async def generate_sse_response(
     chat_request: ChatRequest,
-    db: AsyncSession
+    db
 ) -> AsyncGenerator[str, None]:
     """SSE 스트림 생성"""
     
     try:
         # 프로젝트 확인
-        result = await db.execute(
-            select(Project).where(Project.project_id == chat_request.project_id)
-        )
-        project = result.scalar_one_or_none()
+        if IS_ASYNC:
+            result = await db.execute(
+                select(Project).where(Project.project_id == chat_request.project_id)
+            )
+            project = result.scalar_one_or_none()
+        else:
+            project = db.query(Project).filter(Project.project_id == chat_request.project_id).first()
         
         if not project:
             yield f"data: {json.dumps({'error': '프로젝트를 찾을 수 없습니다'})}\n\n"
@@ -47,7 +50,7 @@ async def generate_sse_response(
         }
         
         # GPT 서비스
-        gpt_service = get_gpt_service()
+        gpt_service = GPTService()
         
         # 빠른 응답 체크 (public method 사용)
         try:
@@ -105,7 +108,10 @@ async def generate_sse_response(
                         )
                         
                         db.add(new_message)
-                        await db.commit()
+                        if IS_ASYNC:
+                            await db.commit()
+                        else:
+                            db.commit()
                     
                     # 메시지 ID와 함께 종료 이벤트 전송
                     yield f"data: {json.dumps({'type': 'end', 'message_id': message_id})}\n\n"
@@ -130,7 +136,7 @@ async def generate_sse_response(
 @router.post("/stream")
 async def stream_message(
     chat_request: ChatRequest,
-    db: AsyncSession = Depends(get_db)
+    db = Depends(get_db)
 ):
     """스트리밍 채팅 엔드포인트"""
     
