@@ -21,11 +21,11 @@ class GPTService:
             raise ValueError("OPENAI_API_KEY environment variable is not set")
         self.client = AsyncOpenAI(api_key=self.api_key)
         
-        # 모델 설정
-        self.model_name = "gpt-4o-mini"  # 비용 효율적이면서 성능 좋음
+        # 모델 설정 (더 빠른 응답을 위해 gpt-3.5-turbo 사용 가능)
+        self.model_name = "gpt-3.5-turbo"  # 더 빠른 응답, 여전히 좋은 성능
         
-        # 캐시 서비스
-        self.cache = ResponseCache(max_size=200, ttl=1800)
+        # 캐시 서비스 (TTL 증가)
+        self.cache = ResponseCache(max_size=200, ttl=3600)
         
         # 빠른 응답 패턴 (기존 gemini_service에서 가져옴)
         self.quick_patterns = {
@@ -165,12 +165,14 @@ class GPTService:
             # 현재 메시지
             messages.append({"role": "user", "content": user_message})
             
-            # API 호출
+            # API 호출 (최적화)
             response = await self.client.chat.completions.create(
                 model=self.model_name,
                 messages=messages,
                 temperature=0.7,
-                max_tokens=500
+                max_tokens=800,  # 토큰 증가
+                presence_penalty=0.1,
+                frequency_penalty=0.1
             )
             
             response_text = response.choices[0].message.content
@@ -243,13 +245,15 @@ class GPTService:
             # 스트리밍 시작
             yield json.dumps({'type': 'start', 'model': self.model_name})
             
-            # GPT 스트리밍 API 호출
+            # GPT 스트리밍 API 호출 (최적화)
             stream = await self.client.chat.completions.create(
                 model=self.model_name,
                 messages=messages,
                 temperature=0.7,
-                max_tokens=500,
-                stream=True
+                max_tokens=800,  # 토큰 증가로 더 완전한 답변
+                stream=True,
+                presence_penalty=0.1,  # 반복 줄이기
+                frequency_penalty=0.1
             )
             
             full_text = ""
@@ -260,7 +264,8 @@ class GPTService:
                     text = chunk.choices[0].delta.content
                     full_text += text
                     yield json.dumps({'type': 'content', 'text': text})
-                    await asyncio.sleep(0.01)  # 부드러운 스트리밍
+                    # 스트리밍 속도 최적화 - sleep 제거 또는 최소화
+                    # await asyncio.sleep(0.01)  # 부드러운 스트리밍
             
             # 캐시에 저장
             if full_text:

@@ -108,15 +108,20 @@ export const useChat = () => {
 
         addMessage(aiMessage);
         
-        // 스트리밍 시작 시 로딩 상태 즉시 해제
-        setIsTyping(false);
-        setLoading({ isLoading: false });
+        // 스트리밍 시작을 기다리는 동안 로딩 유지
+        let firstChunkReceived = false;
 
         // 스트리밍 API 호출
         await api.sendMessageStream(
           chatRequest,
           // onChunk: 텍스트 청크 수신 시
           (text: string) => {
+            // 첫 번째 청크를 받았을 때만 로딩 해제
+            if (!firstChunkReceived) {
+              firstChunkReceived = true;
+              setIsTyping(false);
+              setLoading({ isLoading: false });
+            }
             updateMessage(aiMessageId, (msg) => ({
               ...msg,
               content: msg.content + text
