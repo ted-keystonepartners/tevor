@@ -155,12 +155,21 @@ async def health_check():
             health_status["storage"] = "error"
             health_status["status"] = "degraded"
         
-        # Gemini API 키 체크
-        if not (os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")):
+        # AI API 키 체크 (OpenAI 또는 Gemini)
+        openai_key = os.getenv("OPENAI_API_KEY")
+        gemini_key = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
+        
+        if openai_key or gemini_key:
+            health_status["ai_service"] = "configured"
+            if openai_key and gemini_key:
+                health_status["ai_service"] = "configured (OpenAI + Gemini)"
+            elif openai_key:
+                health_status["ai_service"] = "configured (OpenAI)"
+            else:
+                health_status["ai_service"] = "configured (Gemini)"
+        else:
             health_status["ai_service"] = "not_configured"
             health_status["status"] = "degraded"
-        else:
-            health_status["ai_service"] = "configured"
         
         return health_status
         
