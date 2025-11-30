@@ -12,26 +12,16 @@ DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///db/tevor.db")
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
-# Create database URL with appropriate driver
-if DATABASE_URL.startswith("postgresql://"):
-    # For PostgreSQL, use psycopg2 synchronously (asyncpg not compatible with Python 3.13)
-    # We'll use synchronous operations for PostgreSQL
-    ASYNC_DATABASE_URL = DATABASE_URL
-    IS_ASYNC = False
-else:
-    # For SQLite, use aiosqlite for async operations
-    ASYNC_DATABASE_URL = DATABASE_URL.replace("sqlite://", "sqlite+aiosqlite://", 1)
-    IS_ASYNC = True
+# Determine if we're using async (SQLite) or sync (PostgreSQL)
+IS_ASYNC = not DATABASE_URL.startswith("postgresql://")
 
-# Create engine based on database type
-if IS_ASYNC:
-    engine = create_async_engine(ASYNC_DATABASE_URL, echo=True)
-else:
-    from sqlalchemy import create_engine as create_sync_engine
-    engine = create_sync_engine(ASYNC_DATABASE_URL, echo=False, future=True, pool_pre_ping=True)
 Base = declarative_base()
 
 if IS_ASYNC:
+    # For SQLite, use async operations
+    ASYNC_DATABASE_URL = DATABASE_URL.replace("sqlite://", "sqlite+aiosqlite://", 1)
+    engine = create_async_engine(ASYNC_DATABASE_URL, echo=True)
+    
     SessionLocal = sessionmaker(
         engine, 
         class_=AsyncSession,
@@ -49,7 +39,11 @@ if IS_ASYNC:
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
 else:
+    # For PostgreSQL, use sync operations
     from sqlalchemy.orm import Session
+    
+    engine = create_engine(DATABASE_URL, echo=False, pool_pre_ping=True)
+    
     SessionLocal = sessionmaker(
         engine,
         class_=Session,
@@ -58,7 +52,7 @@ else:
         autoflush=False
     )
     
-    async def get_db():
+    def get_db():
         db = SessionLocal()
         try:
             yield db
@@ -66,4 +60,5 @@ else:
             db.close()
     
     async def init_db():
+        # Run synchronously for PostgreSQL
         Base.metadata.create_all(bind=engine)

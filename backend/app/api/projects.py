@@ -99,7 +99,9 @@ async def list_projects(
             )
             projects = result.scalars().all()
         else:
-            projects = db.query(Project).order_by(Project.created_at.desc()).offset(skip).limit(limit).all()
+            # Use synchronous query for PostgreSQL
+            from app.models.project import Project as ProjectModel
+            projects = db.query(ProjectModel).order_by(ProjectModel.created_at.desc()).offset(skip).limit(limit).all()
         
         return [
             ProjectResponse(
