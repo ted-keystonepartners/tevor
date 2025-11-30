@@ -6,9 +6,24 @@ from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 
-from app.database import init_db
+from app.database import init_db, engine, Base
 from app.api import projects, chat, images, chat_stream
 # GPT Service 제거됨 - Gemini로 통합
+
+# === [WARNING: 임시 코드 - 테이블 생성 후 반드시 제거!] ===
+# PostgreSQL 테이블 생성을 위한 임시 코드
+from app.models.project import Project
+from app.models.image_record import ImageRecord
+import asyncio
+
+async def create_postgresql_tables():
+    """PostgreSQL에 테이블을 생성합니다 (임시 코드)"""
+    async with engine.begin() as conn:
+        # 모든 테이블 생성
+        await conn.run_sync(Base.metadata.create_all)
+        print("⚠️ [TEMPORARY] PostgreSQL 테이블 생성이 완료되었습니다.")
+        print("⚠️ [TEMPORARY] 이 메시지가 보이면 main.py의 테이블 생성 코드를 제거해주세요!")
+# =======================================================
 
 # 환경변수 로드
 load_dotenv()
@@ -18,6 +33,13 @@ async def lifespan(app: FastAPI):
     # 서버 시작시: 데이터베이스 초기화
     print("🚀 TEVOR Backend 시작 중...")
     print("📊 데이터베이스 초기화...")
+    
+    # === [TEMPORARY] PostgreSQL 테이블 생성 ===
+    if os.getenv("DATABASE_URL", "").startswith("postgres"):
+        print("🔧 PostgreSQL 환경 감지 - 테이블 생성 시작...")
+        await create_postgresql_tables()
+    # ==========================================
+    
     await init_db()
     print("✅ 데이터베이스 초기화 완료")
     
