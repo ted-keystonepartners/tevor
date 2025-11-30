@@ -39,11 +39,17 @@ export interface ChatMessage {
   isStreaming?: boolean; // 스트리밍 중인지 여부
   // 메타데이터 - 컨텍스트 추적용
   metadata?: {
-    source?: 'user' | 'gemini' | 'service';
+    source?: 'user' | 'gemini' | 'service' | 'system';
     serviceId?: string;
     serviceData?: any;
     isServiceComponent?: boolean;
+    isStreaming?: boolean;
     summary?: string;
+    serviceActivation?: {
+      name: string;
+      emoji: string;
+      type: string;
+    };
   };
 }
 

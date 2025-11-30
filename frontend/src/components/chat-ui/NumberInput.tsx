@@ -60,7 +60,7 @@ export default function NumberInput({
 
       <button
         onClick={handleSubmit}
-        disabled={!value || parseFloat(value) < min || (max && parseFloat(value) > max)}
+        disabled={!value || parseFloat(value) < min || !!(max && parseFloat(value) > max)}
         className={`w-full py-2.5 rounded-lg font-medium transition-all ${
           value && parseFloat(value) >= min && (!max || parseFloat(value) <= max)
             ? 'bg-blue-600 text-white hover:bg-blue-700'

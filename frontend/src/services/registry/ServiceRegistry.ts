@@ -222,12 +222,7 @@ class ServiceRegistryClass {
         type: 'text',
         content: '관련 서비스를 찾았습니다. 원하시는 서비스를 선택해주세요.',
         metadata: {
-          timestamp: Date.now(),
-          suggestions: suggestions.map(s => ({
-            id: s.id,
-            name: s.name,
-            emoji: s.emoji
-          }))
+          timestamp: Date.now()
         }
       }];
     }

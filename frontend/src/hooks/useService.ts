@@ -79,8 +79,7 @@ export const useService = () => {
           type: 'text',
           content: `[서비스 종료: ${serviceId}]`,
           metadata: {
-            isSystemMessage: true,
-            serviceId: serviceId,
+            serviceId: serviceId || undefined,
             timestamp: Date.now()
           }
         }];

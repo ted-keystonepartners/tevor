@@ -214,7 +214,7 @@ export default function ChatInterface({ projectId }: ChatInterfaceProps) {
         
       case 'service_handle':
         // 서비스가 메시지 처리
-        originalSendMessage(message, 'user', { source: 'user', serviceId: activeServiceId });
+        originalSendMessage(message, 'user', { source: 'user', serviceId: activeServiceId || undefined });
         
         try {
           const serviceMessages = await handleServiceMessage(message);
@@ -224,7 +224,7 @@ export default function ChatInterface({ projectId }: ChatInterfaceProps) {
               originalSendMessage(
                 msg.content, 
                 'assistant',
-                { source: 'service', serviceId: activeServiceId, serviceData: msg.metadata }
+                { source: 'service', serviceId: activeServiceId || undefined, serviceData: msg.metadata }
               );
             } else if (msg.type === 'component' && msg.component) {
               setServiceComponents(prev => [...prev, msg.component as React.ReactElement]);
@@ -235,7 +235,7 @@ export default function ChatInterface({ projectId }: ChatInterfaceProps) {
           originalSendMessage(
             '서비스 처리 중 오류가 발생했습니다.', 
             'assistant',
-            { source: 'service', serviceId: activeServiceId }
+            { source: 'service', serviceId: activeServiceId || undefined }
           );
         }
         break;
@@ -423,7 +423,7 @@ export default function ChatInterface({ projectId }: ChatInterfaceProps) {
                   <ServiceActivationCard
                     serviceName={message.metadata.serviceActivation.name}
                     serviceEmoji={message.metadata.serviceActivation.emoji}
-                    type={message.metadata.serviceActivation.type}
+                    type={message.metadata.serviceActivation.type as 'start' | 'end'}
                   />
                 )}
                 {/* 일반 메시지는 시스템 메시지가 아닌 경우만 표시 */}
