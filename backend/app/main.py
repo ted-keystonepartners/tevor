@@ -18,11 +18,10 @@ import asyncio
 
 async def create_postgresql_tables():
     """PostgreSQL에 테이블을 생성합니다 (임시 코드)"""
-    async with engine.begin() as conn:
-        # 모든 테이블 생성
-        await conn.run_sync(Base.metadata.create_all)
-        print("⚠️ [TEMPORARY] PostgreSQL 테이블 생성이 완료되었습니다.")
-        print("⚠️ [TEMPORARY] 이 메시지가 보이면 main.py의 테이블 생성 코드를 제거해주세요!")
+    # PostgreSQL은 동기 엔진 사용
+    Base.metadata.create_all(bind=engine)
+    print("⚠️ [TEMPORARY] PostgreSQL 테이블 생성이 완료되었습니다.")
+    print("⚠️ [TEMPORARY] 이 메시지가 보이면 main.py의 테이블 생성 코드를 제거해주세요!")
 # =======================================================
 
 # 환경변수 로드

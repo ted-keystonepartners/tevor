@@ -71,5 +71,4 @@ webdriver-manager==4.0.2
 websocket-client==1.8.0
 websockets==14.2
 wsproto==1.2.0
-asyncpg==0.29.0
 psycopg2-binary==2.9.9
