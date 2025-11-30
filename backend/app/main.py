@@ -21,43 +21,21 @@ async def lifespan(app: FastAPI):
     await init_db()
     print("✅ 데이터베이스 초기화 완료")
     
-    # 필수 환경변수 확인 (강화된 검증)
-    required_env_vars = {
-        "GOOGLE_API_KEY": "Google Gemini 서비스", 
-        "GEMINI_API_KEY": "Google Gemini 서비스 (대체)"
-    }
+    # 필수 환경변수 확인 (OpenAI API만 사용)
+    openai_key = os.getenv("OPENAI_API_KEY")
     
-    missing_vars = []
-    warnings = []
-    
-    # Gemini API Key 확인 및 유효성 검증
-    gemini_key = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
-    if not gemini_key:
-        missing_vars.extend(["GOOGLE_API_KEY", "GEMINI_API_KEY"])
-        warnings.append("🚨 Gemini Vision API 키가 없습니다. 이미지 분석 기능이 작동하지 않습니다!")
+    if not openai_key:
+        print("⚠️  경고: OPENAI_API_KEY가 설정되지 않았습니다!")
+        print("   채팅 기능이 작동하지 않습니다.")
+        print("💡 .env 파일을 생성하고 OpenAI API 키를 설정해주세요")
     else:
-        key_source = "GOOGLE_API_KEY" if os.getenv("GOOGLE_API_KEY") else "GEMINI_API_KEY"
-        print(f"✅ Gemini API Key 확인됨 (Source: {key_source})")
+        print("✅ OpenAI API Key 확인됨")
         
-        # API 키 유효성 간단 검증 (키 포맷 확인)
-        if len(gemini_key.strip()) < 10:
-            warnings.append("⚠️ Gemini API 키가 너무 짧습니다. 유효하지 않을 수 있습니다.")
-        elif not gemini_key.startswith(("AIza", "AIzB", "AIzC")):
-            warnings.append("⚠️ Gemini API 키 형식이 올바르지 않을 수 있습니다.")
-    
-    if missing_vars:
-        print(f"⚠️  경고: 다음 환경변수가 설정되지 않았습니다:")
-        for var in missing_vars:
-            service = required_env_vars.get(var, "Unknown service")
-            print(f"   - {var}: {service}")
-        print("💡 .env 파일을 생성하고 필요한 API 키를 설정해주세요")
-    
-    if warnings:
-        for warning in warnings:
-            print(warning)
-    
-    if not missing_vars:
-        print("✅ 모든 필수 환경변수 설정 완료")
+        # API 키 유효성 간단 검증
+        if len(openai_key.strip()) < 20:
+            print("⚠️ OpenAI API 키가 너무 짧습니다. 유효하지 않을 수 있습니다.")
+        elif not openai_key.startswith("sk-"):
+            print("⚠️ OpenAI API 키 형식이 올바르지 않을 수 있습니다.")
     
     # 스토리지 폴더 생성
     storage_path = os.getenv("STORAGE_PATH", "storage/projects")
@@ -155,18 +133,11 @@ async def health_check():
             health_status["storage"] = "error"
             health_status["status"] = "degraded"
         
-        # AI API 키 체크 (OpenAI 또는 Gemini)
+        # OpenAI API 키 체크
         openai_key = os.getenv("OPENAI_API_KEY")
-        gemini_key = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
         
-        if openai_key or gemini_key:
+        if openai_key:
             health_status["ai_service"] = "configured"
-            if openai_key and gemini_key:
-                health_status["ai_service"] = "configured (OpenAI + Gemini)"
-            elif openai_key:
-                health_status["ai_service"] = "configured (OpenAI)"
-            else:
-                health_status["ai_service"] = "configured (Gemini)"
         else:
             health_status["ai_service"] = "not_configured"
             health_status["status"] = "degraded"
@@ -179,10 +150,13 @@ async def health_check():
 # 환경 정보 엔드포인트 (개발용)
 @app.get("/env-info")
 async def env_info():
+    openai_configured = bool(os.getenv("OPENAI_API_KEY"))
+    
     return {
         "storage_path": os.path.abspath(os.getenv("STORAGE_PATH", "storage/projects")),
         "database_url": os.getenv("DATABASE_URL", "sqlite:///db/tevor.db"),
-        "gemini_configured": bool(os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")),
+        "openai_configured": openai_configured,
+        "ai_service": "OpenAI GPT" if openai_configured else "Not configured",
         "python_version": os.sys.version,
         "working_directory": os.getcwd()
     }
