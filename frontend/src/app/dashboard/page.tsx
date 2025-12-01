@@ -25,10 +25,16 @@ export default function DashboardPage() {
     loading,
     createAndSelectProject,
     selectProject,
+    loadProjects,
   } = useProject();
   
   const error = useError();
   const { clearError } = useUIActions();
+
+  // 컴포넌트 마운트 시 프로젝트 목록 로드
+  useEffect(() => {
+    loadProjects();
+  }, [loadProjects]);
 
   // 드롭다운 외부 클릭 감지
   useEffect(() => {
@@ -165,12 +171,13 @@ export default function DashboardPage() {
             </div>
 
             {loading ? (
-              <div className="flex items-center justify-center h-64">
-                <div className="flex gap-2">
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+              <div className="flex flex-col items-center justify-center h-64">
+                <div className="flex gap-2 mb-4">
+                  <div className="w-3 h-3 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <div className="w-3 h-3 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <div className="w-3 h-3 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                 </div>
+                <p className="text-sm text-gray-400">프로젝트 목록을 불러오는 중...</p>
               </div>
             ) : filteredProjects.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

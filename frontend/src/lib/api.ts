@@ -12,9 +12,13 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 60000, // 60초로 증가
+  timeout: 90000, // 90초로 증가 (모바일 네트워크 고려)
   headers: {
     'Content-Type': 'application/json',
+  },
+  // 모바일 네트워크를 위한 재시도 설정
+  validateStatus: function (status) {
+    return status >= 200 && status < 500; // 500 미만은 에러로 처리하지 않음
   },
 });
 
@@ -36,9 +40,11 @@ const errorHandler = (error: any) => {
       console.error('🔥 Server Error Detail:', serverError);
       throw new Error(`서버 오류: ${serverError}`);
     } else if (error.code === 'ECONNABORTED') {
-      throw new Error('요청 시간이 초과되었습니다.');
+      throw new Error('네트워크가 느립니다. 다시 시도해주세요.');
     } else if (error.message === 'Network Error') {
-      throw new Error('네트워크 연결을 확인해주세요.');
+      throw new Error('인터넷 연결을 확인해주세요. WiFi 또는 모바일 데이터가 켜져있는지 확인하세요.');
+    } else if (!error.response) {
+      throw new Error('서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.');
     }
     
     throw error;
