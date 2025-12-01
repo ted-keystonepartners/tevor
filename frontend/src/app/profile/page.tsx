@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { ArrowLeft, User, Home, FolderOpen, Images, ChevronRight, LogOut, Settings, Bell, Shield, HelpCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import MainLayout from '@/components/layout/MainLayout';
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -14,7 +15,7 @@ export default function ProfilePage() {
     router.push('/');
   };
 
-  return (
+  const profileContent = (
     <div className="min-h-screen bg-gray-900">
       {/* 헤더 - 고정 */}
       <header className="fixed top-0 left-0 right-0 z-30 bg-gray-900 px-4 sm:px-6 lg:px-8 py-3">
@@ -175,5 +176,11 @@ export default function ProfilePage() {
         </div>
       </nav>
     </div>
+  );
+
+  return (
+    <MainLayout>
+      {profileContent}
+    </MainLayout>
   );
 }

@@ -1,0 +1,140 @@
+'use client';
+
+import { useState } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
+import { 
+  Home, 
+  FolderOpen, 
+  Images, 
+  User, 
+  Settings,
+  ChevronLeft,
+  Building2
+} from 'lucide-react';
+
+export default function DesktopSidebar() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
+  const menuItems = [
+    { 
+      icon: Home, 
+      label: '홈', 
+      path: '/dashboard',
+      badge: null 
+    },
+    { 
+      icon: FolderOpen, 
+      label: '파일저장소', 
+      path: '/storage',
+      badge: null 
+    },
+    { 
+      icon: Images, 
+      label: '앨범보관함', 
+      path: '/gallery',
+      badge: null 
+    },
+  ];
+
+  const isActive = (path: string) => {
+    if (path === '/dashboard' && pathname.startsWith('/chat')) {
+      return false;
+    }
+    return pathname === path;
+  };
+
+  return (
+    <aside 
+      className={`
+        ${isSidebarCollapsed ? 'w-20' : 'w-64'} 
+        bg-gray-850 border-r border-gray-800 
+        flex flex-col transition-all duration-200
+        flex-shrink-0
+      `}
+    >
+      {/* Logo Section */}
+      <div className="h-16 flex items-center justify-between px-4 border-b border-gray-800">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
+            <Building2 size={20} className="text-white" />
+          </div>
+          {!isSidebarCollapsed && (
+            <div>
+              <h1 className="text-lg font-bold text-white">TEVOR</h1>
+              <p className="text-xs text-gray-400">시공 AI 컨시어지</p>
+            </div>
+          )}
+        </div>
+        <button
+          onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+          className="p-1.5 hover:bg-gray-800 rounded-lg transition-colors"
+        >
+          <ChevronLeft 
+            size={18} 
+            className={`text-gray-400 transition-transform ${isSidebarCollapsed ? 'rotate-180' : ''}`} 
+          />
+        </button>
+      </div>
+
+      {/* Navigation Menu */}
+      <nav className="flex-1 px-2 py-2 space-y-1 overflow-y-auto">
+        {menuItems.map((item) => {
+          const Icon = item.icon;
+          const active = isActive(item.path);
+          
+          return (
+            <button
+              key={item.path}
+              onClick={() => router.push(item.path)}
+              className={`
+                w-full flex items-center gap-3 px-3 py-2.5 rounded-lg
+                transition-all text-sm font-medium
+                ${active 
+                  ? 'bg-blue-600/10 text-blue-400 border border-blue-600/20' 
+                  : 'text-gray-400 hover:bg-gray-800 hover:text-gray-200'
+                }
+                ${isSidebarCollapsed ? 'justify-center' : 'justify-start'}
+              `}
+              title={isSidebarCollapsed ? item.label : undefined}
+            >
+              <Icon size={20} strokeWidth={1.5} />
+              {!isSidebarCollapsed && (
+                <>
+                  <span className="flex-1 text-left">{item.label}</span>
+                  {item.badge && (
+                    <span className="px-2 py-0.5 text-xs bg-blue-600 text-white rounded-full">
+                      {item.badge}
+                    </span>
+                  )}
+                </>
+              )}
+            </button>
+          );
+        })}
+      </nav>
+
+      {/* User Section */}
+      <div className="border-t border-gray-800 p-4">
+        <button
+          onClick={() => router.push('/profile')}
+          className={`w-full flex items-center gap-3 p-2 rounded-lg hover:bg-gray-800 transition-colors ${isSidebarCollapsed ? 'justify-center' : ''}`}
+        >
+          <div className="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center">
+            <User size={20} className="text-gray-400" />
+          </div>
+          {!isSidebarCollapsed && (
+            <>
+              <div className="flex-1 text-left">
+                <p className="text-sm font-medium text-white">사용자</p>
+                <p className="text-xs text-gray-400">프로필 관리</p>
+              </div>
+              <Settings size={18} className="text-gray-400" />
+            </>
+          )}
+        </button>
+      </div>
+    </aside>
+  );
+}

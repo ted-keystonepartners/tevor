@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, ReactNode } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { 
   Home, 
@@ -13,58 +13,74 @@ import {
   Building2
 } from 'lucide-react';
 
-interface DesktopLayoutProps {
-  children: React.ReactNode;
+interface MainLayoutProps {
+  children: ReactNode;
 }
 
-export default function DesktopLayout({ children }: DesktopLayoutProps) {
+export default function MainLayout({ children }: MainLayoutProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // 모바일 감지
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const menuItems = [
     { 
       icon: Home, 
       label: '홈', 
-      path: '/dashboard',
-      badge: null 
+      path: '/dashboard'
     },
     { 
       icon: FolderOpen, 
       label: '파일저장소', 
-      path: '/storage',
-      badge: null 
+      path: '/storage'
     },
     { 
       icon: Images, 
       label: '앨범보관함', 
-      path: '/gallery',
-      badge: null 
+      path: '/gallery'
     },
   ];
 
   const isActive = (path: string) => {
-    if (path === '/chat') {
-      return pathname.startsWith('/chat');
+    if (path === '/dashboard' && pathname.startsWith('/chat')) {
+      return true; // 채팅 페이지에서도 홈 활성화
     }
     return pathname === path;
   };
 
+  // 모바일이면 children만 반환
+  if (isMobile) {
+    return <>{children}</>;
+  }
+
+  // 데스크탑 레이아웃
   return (
-    <div className="flex h-screen bg-gray-900">
-      {/* Sidebar */}
+    <div className="h-screen flex bg-gray-900">
+      {/* 사이드바 */}
       <aside 
         className={`
           ${isSidebarCollapsed ? 'w-20' : 'w-64'} 
           bg-gray-850 border-r border-gray-800 
           flex flex-col transition-all duration-200
-          hidden lg:flex
+          flex-shrink-0
         `}
+        style={{ backgroundColor: '#1a1a1a' }}
       >
-        {/* Logo Section */}
+        {/* 로고 영역 */}
         <div className="h-16 flex items-center justify-between px-4 border-b border-gray-800">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
+            <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center flex-shrink-0">
               <Building2 size={20} className="text-white" />
             </div>
             {!isSidebarCollapsed && (
@@ -85,8 +101,7 @@ export default function DesktopLayout({ children }: DesktopLayoutProps) {
           </button>
         </div>
 
-
-        {/* Navigation Menu */}
+        {/* 메뉴 */}
         <nav className="flex-1 px-2 py-2 space-y-1 overflow-y-auto">
           {menuItems.map((item) => {
             const Icon = item.icon;
@@ -109,27 +124,20 @@ export default function DesktopLayout({ children }: DesktopLayoutProps) {
               >
                 <Icon size={20} strokeWidth={1.5} />
                 {!isSidebarCollapsed && (
-                  <>
-                    <span className="flex-1 text-left">{item.label}</span>
-                    {item.badge && (
-                      <span className="px-2 py-0.5 text-xs bg-blue-600 text-white rounded-full">
-                        {item.badge}
-                      </span>
-                    )}
-                  </>
+                  <span className="flex-1 text-left">{item.label}</span>
                 )}
               </button>
             );
           })}
         </nav>
 
-        {/* User Section */}
+        {/* 사용자 섹션 */}
         <div className="border-t border-gray-800 p-4">
           <button
             onClick={() => router.push('/profile')}
             className={`w-full flex items-center gap-3 p-2 rounded-lg hover:bg-gray-800 transition-colors ${isSidebarCollapsed ? 'justify-center' : ''}`}
           >
-            <div className="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center">
+            <div className="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center flex-shrink-0">
               <User size={20} className="text-gray-400" />
             </div>
             {!isSidebarCollapsed && (
@@ -145,16 +153,8 @@ export default function DesktopLayout({ children }: DesktopLayoutProps) {
         </div>
       </aside>
 
-      {/* Mobile Menu Button */}
-      <button
-        onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-gray-800 rounded-lg"
-      >
-        <Menu size={24} className="text-gray-400" />
-      </button>
-
-      {/* Main Content */}
-      <main className="flex-1 overflow-hidden flex flex-col">
+      {/* 메인 컨텐츠 영역 */}
+      <main className="flex-1 overflow-hidden">
         {children}
       </main>
     </div>

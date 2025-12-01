@@ -6,7 +6,7 @@ import { ChatInterfaceProps } from '@/lib/types';
 import { useChat } from '@/hooks/useChat';
 import { useService } from '@/hooks/useService';
 import { useChatState } from '@/hooks/useChatState';
-import { useCurrentProject, useError } from '@/lib/store';
+import { useCurrentProject } from '@/lib/store';
 import { ServiceRegistry } from '@/services';
 import { MessageRouter } from '@/services/MessageRouter';
 import { ChatMode } from '@/lib/types';
@@ -16,18 +16,9 @@ import ChatServiceButtons from './ChatServiceButtons';
 import TypewriterText from './TypewriterText';
 import ServiceActivationCard from './ServiceActivationCard';
 import ServiceStatusIndicator from './ServiceStatusIndicator';
-import { AlertCircle, ArrowLeft, BookOpen } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import dynamic from 'next/dynamic';
 
-const ChatInterfaceDesktop = dynamic(() => import('./ChatInterfaceDesktop'), { 
-  ssr: false 
-});
-
-export default function ChatInterface({ projectId }: ChatInterfaceProps) {
-  const router = useRouter();
+export default function ChatInterfaceDesktop({ projectId }: ChatInterfaceProps) {
   const currentProject = useCurrentProject();
-  const error = useError();
   
   // Refs
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -38,18 +29,6 @@ export default function ChatInterface({ projectId }: ChatInterfaceProps) {
   const [showButtons, setShowButtons] = useState(false);
   const [showSecondText, setShowSecondText] = useState(false);
   const [serviceComponents, setServiceComponents] = useState<React.ReactElement[]>([]);
-  const [isMobile, setIsMobile] = useState(false);
-  
-  // 모바일 감지
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 1024);
-    };
-    
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
   
   const {
     messages,
@@ -88,9 +67,8 @@ export default function ChatInterface({ projectId }: ChatInterfaceProps) {
     }
   }, [currentProject, projectId, hasLoaded, loadChatHistory]);
 
-  // 자동 스크롤 - 새 메시지가 추가될 때만 실행
+  // 자동 스크롤
   useEffect(() => {
-    // 메시지 개수가 변경되었을 때만 스크롤 (내용 변경은 무시)
     if (messages.length > 0) {
       setTimeout(() => {
         messagesEndRef.current?.scrollIntoView({ 
@@ -98,9 +76,8 @@ export default function ChatInterface({ projectId }: ChatInterfaceProps) {
         });
       }, 100);
     }
-  }, [messages.length]); // 메시지 개수 변경 시에만
+  }, [messages.length]);
   
-  // 서비스 컴포넌트가 표시될 때만 스크롤 (초기 버튼은 제외)
   useEffect(() => {
     if (serviceComponents.length > 0) {
       setTimeout(() => {
@@ -109,7 +86,7 @@ export default function ChatInterface({ projectId }: ChatInterfaceProps) {
         });
       }, 100);
     }
-  }, [serviceComponents.length]); // 컴포넌트 개수 변경 시
+  }, [serviceComponents.length]);
 
   // 서비스 정보 매핑
   const serviceInfo: Record<string, { name: string; emoji: string }> = {
@@ -124,10 +101,8 @@ export default function ChatInterface({ projectId }: ChatInterfaceProps) {
   const handleServiceSelect = useCallback(async (serviceId: string) => {
     console.log('Service selected:', serviceId);
     
-    // 모드 전환
     startService(serviceId);
     
-    // 서비스 시작 메시지 추가
     const info = serviceInfo[serviceId];
     if (info) {
       originalSendMessage(
@@ -145,10 +120,8 @@ export default function ChatInterface({ projectId }: ChatInterfaceProps) {
     }
     
     try {
-      // 서비스 활성화
       const serviceMessages = await activateService(serviceId);
       
-      // 메시지 표시
       serviceMessages.forEach(msg => {
         if (msg.type === 'text' && msg.content) {
           originalSendMessage(
@@ -161,11 +134,7 @@ export default function ChatInterface({ projectId }: ChatInterfaceProps) {
         }
       });
       
-      // 프리미엄철거 서비스인 경우 메시지 타이핑 완료 후 사진 업로드 컴포넌트 표시
       if (serviceId === 'premium-demolition') {
-        // 메시지 길이 계산 (한글 포함 약 100자)
-        // 타이핑 속도 25ms * 100자 = 2500ms + startDelay 300ms = 2800ms
-        // 여유를 두고 3200ms 후 표시
         setTimeout(async () => {
           const service = ServiceRegistry.get(serviceId);
           if (service) {
@@ -176,7 +145,7 @@ export default function ChatInterface({ projectId }: ChatInterfaceProps) {
               }
             });
           }
-        }, 3200); // 타이핑 완료 직후 표시
+        }, 3200);
       }
     } catch (error) {
       console.error('Failed to activate service:', error);
@@ -188,21 +157,18 @@ export default function ChatInterface({ projectId }: ChatInterfaceProps) {
     }
   }, [activateService, originalSendMessage, startService]);
 
-  // 메시지 전송 (라우터 사용)
+  // 메시지 전송
   const sendMessage = useCallback(async (message: string) => {    
-    // 메시지 라우팅
     const routing = await messageRouter.routeMessage(message, mode, activeServiceId);
     
     switch (routing.action) {
       case 'activate_service':
-        // 서비스 활성화
         if (routing.serviceId) {
           await handleServiceSelect(routing.serviceId);
         }
         break;
         
       case 'deactivate_service':
-        // 서비스 종료
         const currentServiceInfo = serviceInfo[activeServiceId || ''];
         if (currentServiceInfo) {
           originalSendMessage(
@@ -230,7 +196,6 @@ export default function ChatInterface({ projectId }: ChatInterfaceProps) {
         break;
         
       case 'service_handle':
-        // 서비스가 메시지 처리
         originalSendMessage(message, 'user', { source: 'user', serviceId: activeServiceId || undefined });
         
         try {
@@ -259,13 +224,11 @@ export default function ChatInterface({ projectId }: ChatInterfaceProps) {
         
       case 'gemini_chat':
       default:
-        // Gemini가 처리
         originalSendMessage(message, 'user', { source: 'user' });
         break;
     }
   }, [mode, activeServiceId, messageRouter, handleServiceMessage, originalSendMessage, handleServiceSelect, deactivateService, endService]);
 
-  // 프로젝트가 로드되지 않은 경우
   if (!currentProject) {
     return (
       <div className="h-full flex items-center justify-center">
@@ -277,126 +240,87 @@ export default function ChatInterface({ projectId }: ChatInterfaceProps) {
     );
   }
 
-  // 에러 상태
-  if (error.hasError) {
-    return (
-      <div className="h-full flex items-center justify-center">
-        <div className="text-center max-w-md">
-          <AlertCircle size={48} className="mx-auto mb-4 text-red-500" />
-          <h2 className="text-lg font-semibold text-gray-900 mb-2">
-            오류가 발생했습니다
-          </h2>
-          <p className="text-gray-600 mb-4">
-            {error.message}
-          </p>
-          <button
-            onClick={() => router.push('/')}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-          >
-            홈으로 돌아가기
-          </button>
+  return (
+    <>
+      {/* 헤더 */}
+      <div className="bg-gray-900 px-6 py-3 border-b border-gray-800">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div>
+              <h1 className="text-lg font-semibold text-white">
+                {currentProject.name}
+              </h1>
+              {(() => {
+                let displayText = '';
+                try {
+                  if (currentProject.description && currentProject.description.startsWith('{')) {
+                    const info = JSON.parse(currentProject.description);
+                    if (info.address) {
+                      displayText = info.address;
+                    }
+                  } else if (currentProject.description) {
+                    displayText = currentProject.description;
+                  }
+                } catch (e) {
+                  displayText = currentProject.description || '';
+                }
+                
+                return displayText ? (
+                  <p className="text-sm text-gray-400">
+                    {displayText}
+                  </p>
+                ) : null;
+              })()}
+            </div>
+          </div>
+          
+          {/* 서비스 상태 표시 */}
+          {isServiceActive && activeServiceId && (
+            <ServiceStatusIndicator
+              serviceId={activeServiceId}
+              onStop={async () => {
+                const currentServiceInfo = serviceInfo[activeServiceId];
+                if (currentServiceInfo) {
+                  originalSendMessage(
+                    `service_activation_${currentServiceInfo.name}_end`,
+                    'system',
+                    { 
+                      source: 'system', 
+                      serviceActivation: { 
+                        name: currentServiceInfo.name, 
+                        emoji: currentServiceInfo.emoji,
+                        type: 'end'
+                      } 
+                    }
+                  );
+                }
+                
+                const messages = await deactivateService();
+                messages.forEach(msg => {
+                  if (msg.type === 'text' && msg.content) {
+                    originalSendMessage(msg.content, 'system', { source: 'service' });
+                  }
+                });
+                setServiceComponents([]);
+                endService();
+              }}
+            />
+          )}
         </div>
       </div>
-    );
-  }
 
-  // 모바일 레이아웃
-  if (isMobile) {
-    return (
-      <div className="h-screen flex flex-col bg-gray-900">
-        {/* 모바일 헤더 */}
-        <header className="fixed top-0 left-0 right-0 z-30 bg-gray-900 px-4 sm:px-6 lg:px-8 py-3">
-          <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => router.push('/dashboard')}
-                className="p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
-                title="대시보드로 돌아가기"
-              >
-                <ArrowLeft size={20} />
-              </button>
-              <div>
-                <h1 className="text-lg font-semibold text-white">
-                  {currentProject.name}
-                </h1>
-            {(() => {
-              // description에서 정보 파싱
-              let displayText = '';
-              try {
-                if (currentProject.description && currentProject.description.startsWith('{')) {
-                  const info = JSON.parse(currentProject.description);
-                  if (info.address) {
-                    displayText = info.address;
-                  }
-                } else if (currentProject.description) {
-                  displayText = currentProject.description;
-                }
-              } catch (e) {
-                displayText = currentProject.description || '';
-              }
-              
-              return displayText ? (
-                <p className="text-sm text-gray-400">
-                  {displayText}
-                </p>
-              ) : null;
-            })()}
-              </div>
-            </div>
-            
-            {/* 서비스 상태 표시 */}
-            {isServiceActive && activeServiceId && (
-              <ServiceStatusIndicator
-            serviceId={activeServiceId}
-            onStop={async () => {
-              // 서비스 종료 메시지 추가
-              const currentServiceInfo = serviceInfo[activeServiceId];
-              if (currentServiceInfo) {
-                originalSendMessage(
-                  `service_activation_${currentServiceInfo.name}_end`,
-                  'system',
-                  { 
-                    source: 'system', 
-                    serviceActivation: { 
-                      name: currentServiceInfo.name, 
-                      emoji: currentServiceInfo.emoji,
-                      type: 'end'
-                    } 
-                  }
-                );
-              }
-              
-              // 서비스 종료
-              const messages = await deactivateService();
-              messages.forEach(msg => {
-                if (msg.type === 'text' && msg.content) {
-                  originalSendMessage(msg.content, 'system', { source: 'service' });
-                }
-              });
-              setServiceComponents([]);
-              endService();
-            }}
-            />
-            )}
-          </div>
-        </div>
-      </header>
-
-        {/* 모바일 메인 컨테이너 */}
-        <div className="flex-1 flex overflow-hidden pt-16">
-        <div className="flex-1 flex flex-col min-w-0">
-          {/* 메시지 목록 */}
-          <div 
-            ref={messagesContainerRef} 
-            className="flex-1 overflow-y-auto p-4 space-y-4 relative [&::-webkit-scrollbar]:hidden"
-            style={{ 
-              overflowAnchor: 'none',
-              scrollbarWidth: 'none',
-              msOverflowStyle: 'none'
-            }}
-          >
-            <div className="max-w-4xl mx-auto">
+      {/* 메시지 영역 */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <div 
+          ref={messagesContainerRef} 
+          className="flex-1 overflow-y-auto p-4 space-y-4 relative [&::-webkit-scrollbar]:hidden"
+          style={{ 
+            overflowAnchor: 'none',
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none'
+          }}
+        >
+          <div className="max-w-4xl mx-auto">
             {/* 초기 메시지 */}
             {messages.length === 0 && serviceComponents.length === 0 && !loading.isLoading && (
               <div className="pt-4 pb-8">
@@ -435,7 +359,6 @@ export default function ChatInterface({ projectId }: ChatInterfaceProps) {
             {/* 메시지 목록 */}
             {messages.map((message) => (
               <React.Fragment key={message.id}>
-                {/* 서비스 활성화/종료 카드 표시 */}
                 {message.metadata?.serviceActivation && (
                   <ServiceActivationCard
                     serviceName={message.metadata.serviceActivation.name}
@@ -443,14 +366,13 @@ export default function ChatInterface({ projectId }: ChatInterfaceProps) {
                     type={message.metadata.serviceActivation.type as 'start' | 'end'}
                   />
                 )}
-                {/* 일반 메시지는 시스템 메시지가 아닌 경우만 표시 */}
                 {!message.metadata?.serviceActivation && (
                   <ChatBubble message={message} />
                 )}
               </React.Fragment>
             ))}
 
-            {/* 서비스 컴포넌트 렌더링 */}
+            {/* 서비스 컴포넌트 */}
             {serviceComponents.map((component, index) => (
               <div key={`service-component-${index}`} className="my-4 animate-fadeIn">
                 {component}
@@ -464,26 +386,24 @@ export default function ChatInterface({ projectId }: ChatInterfaceProps) {
               </div>
             )}
 
-            {/* 스크롤 끝 지점 */}
             <div ref={messagesEndRef} data-messages-end />
-            </div>
           </div>
-
-          {/* 입력 영역 */}
-          <InputArea
-            onSendMessage={sendMessage}
-            onUploadFile={sendMessageWithImage}
-            isLoading={loading.isLoading}
-            disabled={!canSendMessage || mode === ChatMode.TRANSITION || isServiceActive}  // 서비스 활성화 시에도 비활성화
-            onServiceSelect={handleServiceSelect}
-            placeholder={
-              isServiceActive ? 
-                '서비스 진행 중...' : 
-                '메시지를 입력하세요...'
-            }
-          />
         </div>
+
+        {/* 입력 영역 */}
+        <InputArea
+          onSendMessage={sendMessage}
+          onUploadFile={sendMessageWithImage}
+          isLoading={loading.isLoading}
+          disabled={!canSendMessage || mode === ChatMode.TRANSITION || isServiceActive}
+          onServiceSelect={handleServiceSelect}
+          placeholder={
+            isServiceActive ? 
+              '서비스 진행 중...' : 
+              '메시지를 입력하세요...'
+          }
+        />
       </div>
-    </div>
+    </>
   );
 }

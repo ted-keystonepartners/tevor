@@ -2,11 +2,12 @@
 
 import { ArrowLeft, FolderOpen, Home, Images, User } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import MainLayout from '@/components/layout/MainLayout';
 
 export default function StoragePage() {
   const router = useRouter();
 
-  return (
+  const storageContent = (
     <div className="min-h-screen bg-gray-900">
       {/* 헤더 - 고정 */}
       <header className="fixed top-0 left-0 right-0 z-30 bg-gray-900 px-4 sm:px-6 lg:px-8 py-3">
@@ -86,5 +87,11 @@ export default function StoragePage() {
         </div>
       </nav>
     </div>
+  );
+
+  return (
+    <MainLayout>
+      {storageContent}
+    </MainLayout>
   );
 }

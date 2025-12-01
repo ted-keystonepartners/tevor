@@ -6,7 +6,7 @@ import ChatInterface from '@/components/ChatInterface';
 import { useProject } from '@/hooks/useProject';
 import { useCurrentProject, useError, useUIActions } from '@/lib/store';
 import { AlertCircle, ArrowLeft, Home, Loader2 } from 'lucide-react';
-import DesktopLayout from '@/components/layout/DesktopLayout';
+import MainLayout from '@/components/layout/MainLayout';
 
 interface ChatPageParams {
   projectId: string;
@@ -89,7 +89,7 @@ export default function ChatPage() {
       );
     }
 
-    return <DesktopLayout>{loadingContent}</DesktopLayout>;
+    return <MainLayout>{loadingContent}</MainLayout>;
   }
 
   // 에러 상태
@@ -139,7 +139,7 @@ export default function ChatPage() {
       );
     }
 
-    return <DesktopLayout>{errorContent}</DesktopLayout>;
+    return <MainLayout>{errorContent}</MainLayout>;
   }
 
   // 프로젝트가 없는 경우
@@ -173,7 +173,7 @@ export default function ChatPage() {
       );
     }
 
-    return <DesktopLayout>{noProjectContent}</DesktopLayout>;
+    return <MainLayout>{noProjectContent}</MainLayout>;
   }
 
   // 정상적으로 채팅 인터페이스 렌더링
@@ -184,5 +184,5 @@ export default function ChatPage() {
     return chatContent;
   }
 
-  return <DesktopLayout>{chatContent}</DesktopLayout>;
+  return <MainLayout>{chatContent}</MainLayout>;
 }

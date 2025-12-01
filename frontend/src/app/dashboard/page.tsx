@@ -7,7 +7,7 @@ import { Plus, Search, X, ChevronDown, Home, FolderOpen, Images, User, Building2
 import { useRouter } from 'next/navigation';
 import ProjectCard from '@/components/ProjectCard';
 import TypewriterText from '@/components/TypewriterText';
-import DesktopLayout from '@/components/layout/DesktopLayout';
+import MainLayout from '@/components/layout/MainLayout';
 import './dashboard.css';
 
 export default function DashboardPage() {
@@ -418,10 +418,9 @@ export default function DashboardPage() {
     </>
   );
 
-  // 데스크탑에서는 레이아웃으로 감싸고, 모바일에서는 그대로
-  if (isMobile) {
-    return <div className="min-h-screen bg-gray-900">{dashboardContent}</div>;
-  }
-
-  return <DesktopLayout>{dashboardContent}</DesktopLayout>;
+  return (
+    <MainLayout>
+      {dashboardContent}
+    </MainLayout>
+  );
 }
