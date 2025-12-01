@@ -6,6 +6,7 @@ import ChatInterface from '@/components/ChatInterface';
 import { useProject } from '@/hooks/useProject';
 import { useCurrentProject, useError, useUIActions } from '@/lib/store';
 import { AlertCircle, ArrowLeft, Home, Loader2 } from 'lucide-react';
+import DesktopLayout from '@/components/layout/DesktopLayout';
 
 interface ChatPageParams {
   projectId: string;
@@ -16,11 +17,23 @@ export default function ChatPage() {
   const projectId = params.projectId as string;
   const router = useRouter();
   const [isInitializing, setIsInitializing] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
   
   const { loadProject } = useProject();
   const currentProject = useCurrentProject();
   const error = useError();
   const { clearError } = useUIActions();
+
+  // 모바일 감지
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // 프로젝트 로드
   useEffect(() => {
@@ -48,109 +61,128 @@ export default function ChatPage() {
         }
         
       } catch (error) {
-        console.error('프로젝트 초기화 실패:', error);
-        // 에러가 발생해도 페이지에서 에러를 처리하도록 함
+        console.error('프로젝트 로드 실패:', error);
       } finally {
         setIsInitializing(false);
       }
     };
 
     initializeProject();
-  }, [projectId, loadProject, currentProject?.project_id, router]);
+  }, [projectId, currentProject?.project_id, loadProject, router]);
 
-  // 로딩 상태
+  // 로딩 중
   if (isInitializing) {
-    return (
-      <div className="h-screen flex items-center justify-center bg-gray-900">
+    const loadingContent = (
+      <div className="flex-1 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 bg-blue-900/50 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Loader2 size={24} className="text-blue-400 animate-spin" />
-          </div>
-          <h2 className="text-lg font-semibold text-white mb-2">
-            프로젝트를 불러오는 중...
-          </h2>
-          <p className="text-gray-300">
-            잠시만 기다려주세요
-          </p>
+          <Loader2 className="w-10 h-10 text-blue-500 animate-spin mx-auto mb-4" />
+          <p className="text-gray-400">프로젝트를 불러오는 중...</p>
         </div>
       </div>
     );
+
+    if (isMobile) {
+      return (
+        <div className="min-h-screen bg-gray-900 flex flex-col">
+          {loadingContent}
+        </div>
+      );
+    }
+
+    return <DesktopLayout>{loadingContent}</DesktopLayout>;
   }
 
-  // 프로젝트를 찾을 수 없는 경우
-  if (!currentProject) {
-    return (
-      <div className="h-screen flex items-center justify-center bg-gray-900">
-        <div className="text-center max-w-md">
-          <AlertCircle size={48} className="mx-auto mb-4 text-red-400" />
+  // 에러 상태
+  if (error.hasError) {
+    const errorContent = (
+      <div className="flex-1 flex items-center justify-center p-4">
+        <div className="max-w-md w-full">
+          <div className="bg-gray-800 rounded-lg border border-gray-700 p-6 text-center">
+            <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold text-white mb-2">
+              오류가 발생했습니다
+            </h2>
+            <p className="text-gray-400 mb-6">
+              {error.message || '프로젝트를 불러올 수 없습니다.'}
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  clearError();
+                  router.push('/dashboard');
+                }}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 transition-colors"
+              >
+                <Home size={18} />
+                홈으로
+              </button>
+              <button
+                onClick={() => {
+                  clearError();
+                  window.location.reload();
+                }}
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                다시 시도
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+
+    if (isMobile) {
+      return (
+        <div className="min-h-screen bg-gray-900 flex flex-col">
+          {errorContent}
+        </div>
+      );
+    }
+
+    return <DesktopLayout>{errorContent}</DesktopLayout>;
+  }
+
+  // 프로젝트가 없는 경우
+  if (!currentProject || currentProject.project_id !== projectId) {
+    const noProjectContent = (
+      <div className="flex-1 flex items-center justify-center p-4">
+        <div className="text-center">
+          <AlertCircle className="w-12 h-12 text-gray-500 mx-auto mb-4" />
           <h2 className="text-xl font-semibold text-white mb-2">
             프로젝트를 찾을 수 없습니다
           </h2>
-          <p className="text-gray-300 mb-6">
-            요청하신 프로젝트가 존재하지 않거나 삭제되었을 수 있습니다.
+          <p className="text-gray-400 mb-6">
+            요청하신 프로젝트가 존재하지 않거나 삭제되었습니다.
           </p>
-          <div className="flex gap-3 justify-center">
-            <button
-              onClick={() => router.push('/')}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-            >
-              <Home size={16} />
-              홈으로 돌아가기
-            </button>
-            <button
-              onClick={() => router.back()}
-              className="flex items-center gap-2 px-4 py-2 text-gray-300 border border-gray-600 rounded-lg hover:bg-gray-700 transition-colors"
-            >
-              <ArrowLeft size={16} />
-              이전 페이지
-            </button>
-          </div>
+          <button
+            onClick={() => router.push('/dashboard')}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <ArrowLeft size={18} />
+            프로젝트 목록으로
+          </button>
         </div>
       </div>
     );
+
+    if (isMobile) {
+      return (
+        <div className="min-h-screen bg-gray-900 flex flex-col">
+          {noProjectContent}
+        </div>
+      );
+    }
+
+    return <DesktopLayout>{noProjectContent}</DesktopLayout>;
   }
 
-  // 에러 상태 (다른 에러들)
-  if (error.hasError && !isInitializing) {
-    return (
-      <div className="h-screen flex flex-col">
-        {/* 에러 배너 */}
-        <div className="bg-red-900/20 border-b border-red-800 p-4">
-            <div className="flex items-center gap-3 max-w-6xl mx-auto">
-              <AlertCircle size={20} className="text-red-400 flex-shrink-0" />
-              <div className="flex-1">
-                <p className="text-sm font-medium text-red-200">
-                  연결 문제가 발생했습니다
-                </p>
-                <p className="text-sm text-red-300">
-                  {error.message}
-                </p>
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => window.location.reload()}
-                  className="text-sm text-red-300 hover:text-red-100 font-medium"
-                >
-                  새로고침
-                </button>
-                <button
-                  onClick={clearError}
-                  className="text-red-300 hover:text-red-100 ml-2"
-                >
-                  ×
-                </button>
-              </div>
-            </div>
-        </div>
-        
-        {/* 채팅 인터페이스는 에러와 함께 표시 */}
-        <div className="flex-1">
-          <ChatInterface projectId={projectId} />
-        </div>
-      </div>
-    );
+  // 정상적으로 채팅 인터페이스 렌더링
+  const chatContent = <ChatInterface projectId={projectId} />;
+
+  // 모바일에서는 전체 화면, 데스크탑에서는 레이아웃 안에
+  if (isMobile) {
+    return chatContent;
   }
 
-  // 정상 상태 - 채팅 인터페이스 렌더링
-  return <ChatInterface projectId={projectId} />;
+  return <DesktopLayout>{chatContent}</DesktopLayout>;
 }
