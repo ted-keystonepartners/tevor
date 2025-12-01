@@ -60,26 +60,13 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# CORS 설정 (프로덕션 지원)
+# CORS 설정 (모든 도메인 허용 - 개발 중)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000", 
-        "http://127.0.0.1:3000",
-        "https://tevor.vercel.app",  # Vercel 기본 도메인
-        "https://tevor-*.vercel.app",  # Vercel 프리뷰 도메인
-        "https://*.vercel.app",  # 모든 Vercel 도메인 (개발 중)
-        # 커스텀 도메인 추가 시 여기에 추가
-    ],
-    allow_credentials=True,  # 쿠키/인증 지원
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],  # OPTIONS 추가
-    allow_headers=[
-        "Content-Type", 
-        "Authorization",
-        "Accept",
-        "Origin",
-        "X-Requested-With"
-    ],
+    allow_origins=["*"],  # 모든 도메인 허용
+    allow_credentials=True,
+    allow_methods=["*"],  # 모든 메서드 허용
+    allow_headers=["*"],  # 모든 헤더 허용
 )
 
 # 정적 파일 서빙 설정 (아카이브 이미지)

@@ -5,10 +5,13 @@
 """
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from sqlalchemy.future import select
 from typing import Dict, Any
 import uuid
+import json
+import asyncio
 from datetime import datetime, timezone, timedelta
 
 from app.database import get_db, IS_ASYNC
@@ -107,6 +110,93 @@ async def send_message_v2(
             status_code=500,
             detail=f"채팅 처리 중 오류가 발생했습니다: {str(e)}"
         )
+
+@router.post("/stream")
+async def chat_stream(
+    chat_request: ChatRequest,
+    db = Depends(get_db)
+):
+    """스트리밍 채팅 응답"""
+    async def generate():
+        try:
+            # 프로젝트 확인
+            if IS_ASYNC:
+                result = await db.execute(
+                    select(Project).where(Project.project_id == chat_request.project_id)
+                )
+                project = result.scalar_one_or_none()
+            else:
+                project = db.query(Project).filter(Project.project_id == chat_request.project_id).first()
+            
+            if not project:
+                yield f"data: {json.dumps({'type': 'error', 'message': '프로젝트를 찾을 수 없습니다'})}\n\n"
+                return
+            
+            # 프로젝트 컨텍스트
+            project_context = {
+                "project_type": project.project_type or "일반 주택",
+                "current_stage": project.current_stage or "시공 전",
+                "expected_spaces": project.expected_spaces or ["거실", "주방", "침실", "욕실"]
+            }
+            
+            # 최근 대화 히스토리 가져오기 (3개만)
+            if IS_ASYNC:
+                result = await db.execute(
+                    select(ChatMessage)
+                    .where(ChatMessage.project_id == chat_request.project_id)
+                    .order_by(ChatMessage.created_at.desc())
+                    .limit(3)
+                )
+                recent_messages = result.scalars().all()
+            else:
+                recent_messages = db.query(ChatMessage).filter(
+                    ChatMessage.project_id == chat_request.project_id
+                ).order_by(ChatMessage.created_at.desc()).limit(3).all()
+            
+            # 대화 히스토리 구성
+            conversation_history = []
+            for msg in reversed(recent_messages):
+                conversation_history.append({"role": "user", "content": msg.user_message})
+                conversation_history.append({"role": "assistant", "content": msg.ai_response})
+            
+            # GPT 스트리밍 응답
+            gpt_service = GPTService()
+            full_response = ""
+            
+            async for chunk in gpt_service.generate_stream(
+                user_message=chat_request.message,
+                project_context=project_context,
+                conversation_history=conversation_history
+            ):
+                yield f"data: {chunk}\n\n"
+                
+                # 응답 텍스트 누적
+                chunk_data = json.loads(chunk)
+                if chunk_data.get('type') == 'content':
+                    full_response += chunk_data.get('text', '')
+            
+            # DB에 저장 (스트리밍 완료 후)
+            if full_response:
+                message_id = f"msg_{str(uuid.uuid4())[:8]}"
+                new_message = ChatMessage(
+                    message_id=message_id,
+                    project_id=chat_request.project_id,
+                    user_message=chat_request.message,
+                    ai_response=full_response,
+                    rag_context=None,
+                    confidence=1.0
+                )
+                
+                db.add(new_message)
+                if IS_ASYNC:
+                    await db.commit()
+                else:
+                    db.commit()
+            
+        except Exception as e:
+            yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
+    
+    return StreamingResponse(generate(), media_type="text/event-stream")
 
 @router.get("/history/{project_id}")
 async def get_chat_history_v2(

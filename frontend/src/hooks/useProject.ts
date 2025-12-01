@@ -30,21 +30,34 @@ export const useProject = () => {
     reset,
   } = useUIActions();
 
-  // 프로젝트 목록 로드
-  const loadProjects = useCallback(async () => {
-    setLoading({ isLoading: true, message: '프로젝트 목록을 불러오는 중...' });
-    clearError();
+  // 프로젝트 목록 로드 (재시도 로직 포함)
+  const loadProjects = useCallback(async (retryCount = 0): Promise<void> => {
+    if (retryCount === 0) {
+      setLoading({ isLoading: true, message: '프로젝트 목록을 불러오는 중...' });
+      clearError();
+    }
 
     try {
       const projectList = await api.listProjects();
       setProjects(projectList);
+      setLoading({ isLoading: false });
     } catch (error) {
-      console.error('프로젝트 목록 로딩 실패:', error);
+      console.error(`프로젝트 목록 로딩 실패 (시도 ${retryCount + 1}/3):`, error);
+      
+      // 3번까지 재시도
+      if (retryCount < 2) {
+        console.log('2초 후 재시도합니다...');
+        setTimeout(() => {
+          loadProjects(retryCount + 1);
+        }, 2000);
+        return;
+      }
+      
+      // 최종 실패
       setError({
         hasError: true,
         message: error instanceof Error ? error.message : '프로젝트 목록을 불러오는데 실패했습니다.',
       });
-    } finally {
       setLoading({ isLoading: false });
     }
   }, [setProjects, setLoading, setError, clearError]);

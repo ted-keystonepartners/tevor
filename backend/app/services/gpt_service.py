@@ -21,8 +21,8 @@ class GPTService:
             raise ValueError("OPENAI_API_KEY environment variable is not set")
         self.client = AsyncOpenAI(api_key=self.api_key)
         
-        # 모델 설정 (더 빠른 응답을 위해 gpt-3.5-turbo 사용 가능)
-        self.model_name = "gpt-3.5-turbo"  # 더 빠른 응답, 여전히 좋은 성능
+        # 모델 설정 (최신 GPT-4-turbo 사용 - 매우 빠르고 성능 좋음)
+        self.model_name = "gpt-4-turbo-preview"  # 최신 GPT-4 터보 모델, 매우 빠름
         
         # 캐시 서비스 (TTL 증가)
         self.cache = ResponseCache(max_size=200, ttl=3600)
@@ -156,7 +156,7 @@ class GPTService:
             
             # 대화 히스토리 추가
             if conversation_history:
-                for h in conversation_history[-10:]:  # 최근 10개만
+                for h in conversation_history[-3:]:  # 최근 3개만 (속도 개선)
                     if h.get("role") == "user":
                         messages.append({"role": "user", "content": h.get("content", "")})
                     elif h.get("role") == "assistant":
@@ -233,7 +233,7 @@ class GPTService:
             
             # 대화 히스토리 추가
             if conversation_history:
-                for h in conversation_history[-10:]:
+                for h in conversation_history[-3:]:  # 최근 3개만 (속도 개선)
                     if h.get("role") == "user":
                         messages.append({"role": "user", "content": h.get("content", "")})
                     elif h.get("role") == "assistant":
@@ -249,11 +249,11 @@ class GPTService:
             stream = await self.client.chat.completions.create(
                 model=self.model_name,
                 messages=messages,
-                temperature=0.7,
-                max_tokens=800,  # 토큰 증가로 더 완전한 답변
+                temperature=0.5,  # 더 빠른 응답을 위해 낮춤
+                max_tokens=500,   # 토큰 수 줄여서 속도 개선
                 stream=True,
-                presence_penalty=0.1,  # 반복 줄이기
-                frequency_penalty=0.1
+                presence_penalty=0,
+                frequency_penalty=0
             )
             
             full_text = ""

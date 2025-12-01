@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import ProjectCard from '@/components/ProjectCard';
 import TypewriterText from '@/components/TypewriterText';
 import MainLayout from '@/components/layout/MainLayout';
+import { api } from '@/lib/api';
 import './dashboard.css';
 
 export default function DashboardPage() {
@@ -47,6 +48,12 @@ export default function DashboardPage() {
 
   // 컴포넌트 마운트 시 프로젝트 목록 로드
   useEffect(() => {
+    // 서버 깨우기 (헬스체크)
+    api.healthCheck().catch(() => {
+      console.log('서버를 깨우는 중...');
+    });
+    
+    // 프로젝트 로드
     loadProjects();
   }, [loadProjects]);
 
