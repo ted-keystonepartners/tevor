@@ -83,16 +83,16 @@ export default function ChatInterface({ projectId }: ChatInterfaceProps) {
     }
   }, [messages.length]); // 메시지 개수 변경 시에만
   
-  // 서비스 컴포넌트나 버튼이 표시될 때 스크롤
+  // 서비스 컴포넌트가 표시될 때만 스크롤 (초기 버튼은 제외)
   useEffect(() => {
-    if (serviceComponents.length > 0 || showButtons) {
+    if (serviceComponents.length > 0) {
       setTimeout(() => {
         messagesEndRef.current?.scrollIntoView({ 
           behavior: 'smooth'
         });
       }, 100);
     }
-  }, [serviceComponents.length, showButtons]); // 컴포넌트 개수나 버튼 표시 시
+  }, [serviceComponents.length]); // 컴포넌트 개수 변경 시
 
   // 서비스 정보 매핑
   const serviceInfo: Record<string, { name: string; emoji: string }> = {
@@ -380,16 +380,15 @@ export default function ChatInterface({ projectId }: ChatInterfaceProps) {
             <div className="max-w-4xl mx-auto">
             {/* 초기 메시지 */}
             {messages.length === 0 && serviceComponents.length === 0 && !loading.isLoading && (
-              <div className="py-8">
+              <div className="pt-4 pb-8">
                 <div className="max-w-2xl mx-auto">
-                  <div className="mb-12">
+                  <div className="mb-8">
                     <h3 className="text-xl font-normal text-gray-300 mb-2">
                       <TypewriterText 
                         text="필요하신 서비스를 선택해주세요" 
-                        delay={60}
+                        delay={30}
                         onComplete={() => {
                           setShowSecondText(true);
-                          messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
                         }}
                       />
                     </h3>
@@ -397,10 +396,9 @@ export default function ChatInterface({ projectId }: ChatInterfaceProps) {
                       <p className="text-2xl font-medium text-white">
                         <TypewriterText 
                           text="채팅으로도 문의하실 수 있어요" 
-                          delay={60}
+                          delay={30}
                           onComplete={() => {
                             setShowButtons(true);
-                            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
                           }}
                         />
                       </p>

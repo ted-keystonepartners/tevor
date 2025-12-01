@@ -42,17 +42,15 @@ export default function ProjectCard({ project, onSelect }: ProjectCardProps) {
   return (
     <div
       onClick={onSelect}
-      className="group relative bg-gray-800 rounded-2xl overflow-hidden hover:bg-gray-750 transition-all duration-300 cursor-pointer border border-gray-700 hover:border-gray-600"
+      className="group relative bg-gray-800 rounded-2xl overflow-hidden transition-all duration-200 cursor-pointer border border-gray-700 hover:border-blue-500/50 hover:shadow-lg hover:shadow-blue-500/10 hover:scale-[1.02] active:scale-[0.98]"
     >
-      {/* 상태 인디케이터 */}
-      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-600 to-blue-400 opacity-0 group-hover:opacity-100 transition-opacity" />
       
       {/* 카드 컨텐츠 */}
       <div className="p-6">
         {/* 헤더 영역 */}
         <div className="mb-4">
           <div className="flex items-start justify-between mb-3">
-            <h3 className="text-lg font-semibold text-white group-hover:text-blue-400 transition-colors line-clamp-1">
+            <h3 className="text-lg font-semibold text-white line-clamp-1">
               {project.name}
             </h3>
             {source && (
@@ -107,10 +105,6 @@ export default function ProjectCard({ project, onSelect }: ProjectCardProps) {
         </div>
       </div>
 
-      {/* 호버 액션 힌트 */}
-      <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-gray-900/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-        <span className="text-xs text-gray-300">클릭하여 채팅 시작</span>
-      </div>
     </div>
   );
 }
