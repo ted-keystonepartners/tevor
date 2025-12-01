@@ -7,6 +7,7 @@ import { Plus, Search, X, ChevronDown, Home, FolderOpen, Images, User } from 'lu
 import { useRouter } from 'next/navigation';
 import ProjectCard from '@/components/ProjectCard';
 import TypewriterText from '@/components/TypewriterText';
+import './dashboard.css';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -156,15 +157,15 @@ export default function DashboardPage() {
               <h2 className="text-2xl font-medium text-gray-300 mb-1">
                 <TypewriterText 
                   text="안녕하세요" 
-                  delay={50}
+                  delay={25}  // 더 빠르게
                   onComplete={() => setShowSecondGreeting(true)}
                 />
               </h2>
               {showSecondGreeting && (
                 <h2 className="text-2xl font-medium text-white">
                   <TypewriterText 
-                    text="오늘은 무엇을 도와드릴까요?" 
-                    delay={50}
+                    text="오늘은 어떤 프로젝트를 관리하시나요?" 
+                    delay={25}  // 더 빠르게
                   />
                 </h2>
               )}
@@ -172,12 +173,24 @@ export default function DashboardPage() {
 
             {loading ? (
               <div className="flex flex-col items-center justify-center h-64">
-                <div className="flex gap-2 mb-4">
-                  <div className="w-3 h-3 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <div className="w-3 h-3 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <div className="w-3 h-3 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                {/* 모던한 로딩 스피너 */}
+                <div className="relative mb-6">
+                  <div className="w-16 h-16">
+                    <div className="absolute top-0 left-0 w-full h-full">
+                      <div className="w-16 h-16 rounded-full border-4 border-gray-800"></div>
+                    </div>
+                    <div className="absolute top-0 left-0 w-full h-full animate-spin">
+                      <div className="w-16 h-16 rounded-full border-4 border-transparent border-t-blue-500 border-r-blue-500"></div>
+                    </div>
+                  </div>
+                  {/* 중앙 아이콘 */}
+                  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                    <div className="w-8 h-8 bg-gray-800 rounded-lg flex items-center justify-center">
+                      <div className="w-4 h-4 bg-blue-500 rounded-sm animate-pulse"></div>
+                    </div>
+                  </div>
                 </div>
-                <p className="text-sm text-gray-400">프로젝트 목록을 불러오는 중...</p>
+                <p className="text-sm text-gray-400 font-medium">프로젝트 목록을 불러오는 중...</p>
               </div>
             ) : filteredProjects.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
