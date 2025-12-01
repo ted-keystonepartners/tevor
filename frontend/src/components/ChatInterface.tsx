@@ -300,9 +300,13 @@ export default function ChatInterface({ projectId }: ChatInterfaceProps) {
     );
   }
 
+  // 데스크탑은 별도 컴포넌트 사용
+  if (!isMobile) {
+    return <ChatInterfaceDesktop projectId={projectId} />;
+  }
+
   // 모바일 레이아웃
-  if (isMobile) {
-    return (
+  return (
       <div className="h-screen flex flex-col bg-gray-900">
         {/* 모바일 헤더 */}
         <header className="fixed top-0 left-0 right-0 z-30 bg-gray-900 px-4 sm:px-6 lg:px-8 py-3">
