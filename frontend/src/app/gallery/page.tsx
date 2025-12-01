@@ -1,34 +1,48 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { ArrowLeft, Images, Home, FolderOpen, User } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import MainLayout from '@/components/layout/MainLayout';
 
 export default function GalleryPage() {
   const router = useRouter();
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const galleryContent = (
     <div className="min-h-screen bg-gray-900">
-      {/* 헤더 - 고정 */}
-      <header className="fixed top-0 left-0 right-0 z-30 bg-gray-900 px-4 sm:px-6 lg:px-8 py-3">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-center">
-            <button
-              onClick={() => router.push('/dashboard')}
-              className="p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
-              title="대시보드로 돌아가기"
-            >
-              <ArrowLeft size={20} />
-            </button>
-            <h1 className="ml-3 text-lg font-semibold text-white">
-              앨범보관함
-            </h1>
+      {/* 헤더 - 모바일에서만 표시 */}
+      {isMobile && (
+        <header className="fixed top-0 left-0 right-0 z-30 bg-gray-900 px-4 sm:px-6 lg:px-8 py-3">
+          <div className="max-w-7xl mx-auto">
+            <div className="flex items-center">
+              <button
+                onClick={() => router.push('/dashboard')}
+                className="p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
+                title="대시보드로 돌아가기"
+              >
+                <ArrowLeft size={20} />
+              </button>
+              <h1 className="ml-3 text-lg font-semibold text-white">
+                앨범보관함
+              </h1>
+            </div>
           </div>
-        </div>
-      </header>
+        </header>
+      )}
 
       {/* 메인 콘텐츠 */}
-      <div className="pt-16">
+      <div className={isMobile ? "pt-16" : ""}>
         <main className="p-4 sm:p-6 lg:p-8 pb-24">
           <div className="max-w-7xl mx-auto">
             <div className="flex flex-col items-center justify-center py-20">
@@ -46,8 +60,9 @@ export default function GalleryPage() {
         </main>
       </div>
 
-      {/* 하단 네비게이션 바 */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-gray-850 border-t border-gray-800 z-20" style={{ height: '56px' }}>
+      {/* 하단 네비게이션 바 - 모바일에서만 표시 */}
+      {isMobile && (
+        <nav className="fixed bottom-0 left-0 right-0 bg-gray-850 border-t border-gray-800 z-20" style={{ height: '56px' }}>
         <div className="h-full flex items-center justify-around">
           {/* 홈 */}
           <button
@@ -85,7 +100,8 @@ export default function GalleryPage() {
             <span className="text-[10px] leading-[14px] mt-0.5">프로필관리</span>
           </button>
         </div>
-      </nav>
+        </nav>
+      )}
     </div>
   );
 
