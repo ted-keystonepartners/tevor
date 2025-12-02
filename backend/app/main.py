@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 
 from app.database import init_db
 from app.api import projects, chat, images, chat_stream
+from app.startup import startup_event
 # GPT Service 제거됨 - Gemini로 통합
 
 # 환경변수 로드
@@ -15,11 +16,16 @@ load_dotenv()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # 서버 시작시: 데이터베이스 초기화
+    # 서버 시작시: 데이터베이스 초기화 및 최적화
     print("🚀 TEVOR Backend 시작 중...")
     print("📊 데이터베이스 초기화...")
     await init_db()
     print("✅ 데이터베이스 초기화 완료")
+    
+    # 스타트업 최적화 실행
+    print("🔧 연결 풀 최적화 중...")
+    await startup_event()
+    print("✅ 연결 풀 최적화 완료")
     
     # 필수 환경변수 확인 (OpenAI API만 사용)
     openai_key = os.getenv("OPENAI_API_KEY")

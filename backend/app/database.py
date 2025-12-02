@@ -39,26 +39,46 @@ if IS_ASYNC:
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
 else:
-    # For PostgreSQL, use sync operations
-    from sqlalchemy.orm import Session
+    # For PostgreSQL, use async operations with optimized pooling
+    from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+    import asyncpg
     
-    engine = create_engine(DATABASE_URL, echo=False, pool_pre_ping=True)
+    # Convert to async PostgreSQL URL
+    ASYNC_DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
+    
+    # Create async engine with optimized connection pooling
+    engine = create_async_engine(
+        ASYNC_DATABASE_URL,
+        echo=False,
+        pool_size=5,  # Number of connections to maintain
+        max_overflow=10,  # Maximum overflow connections
+        pool_pre_ping=True,  # Verify connections before using
+        pool_recycle=3600,  # Recycle connections after 1 hour
+        connect_args={
+            "server_settings": {
+                "application_name": "tevor",
+                "jit": "off"  # Disable JIT for faster query startup
+            },
+            "command_timeout": 60,
+            "timeout": 30,
+        }
+    )
     
     SessionLocal = sessionmaker(
         engine,
-        class_=Session,
+        class_=AsyncSession,
         expire_on_commit=False,
         autocommit=False,
         autoflush=False
     )
     
-    def get_db():
-        db = SessionLocal()
-        try:
-            yield db
-        finally:
-            db.close()
+    async def get_db():
+        async with SessionLocal() as db:
+            try:
+                yield db
+            finally:
+                await db.close()
     
     async def init_db():
-        # Run synchronously for PostgreSQL
-        Base.metadata.create_all(bind=engine)
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)

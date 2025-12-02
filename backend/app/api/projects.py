@@ -4,11 +4,13 @@ from sqlalchemy.future import select
 from typing import List, Optional
 import uuid
 from datetime import datetime
+import json
 
 from app.database import get_db, IS_ASYNC
 from app.models.project import Project
 from app.schemas.chat import ProjectCreate, ProjectResponse
 from app.services.archive_service import ArchiveService
+from app.middleware.cache import cache
 
 router = APIRouter(prefix="/api/v1/projects", tags=["projects"])
 
@@ -89,6 +91,13 @@ async def list_projects(
     limit: int = 50,
     db = Depends(get_db)
 ):
+    # Check cache first
+    cache_key = cache.make_key("projects", {"skip": skip, "limit": limit})
+    cached_result = cache.get(cache_key)
+    
+    if cached_result is not None:
+        return cached_result
+    
     try:
         if IS_ASYNC:
             result = await db.execute(
@@ -103,7 +112,7 @@ async def list_projects(
             from app.models.project import Project as ProjectModel
             projects = db.query(ProjectModel).order_by(ProjectModel.created_at.desc()).offset(skip).limit(limit).all()
         
-        return [
+        response = [
             ProjectResponse(
                 project_id=project.project_id,
                 name=project.name,
@@ -112,6 +121,11 @@ async def list_projects(
             )
             for project in projects
         ]
+        
+        # Cache the result for 30 seconds
+        cache.set(cache_key, response, ttl_seconds=30)
+        
+        return response
         
     except Exception as e:
         print(f"Projects listing error: {e}")
