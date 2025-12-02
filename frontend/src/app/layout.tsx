@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import '@/styles/globals.css';
+import ServerWakeup from '@/components/ServerWakeup';
 
 export const metadata: Metadata = {
   title: 'TEVOR - 인테리어 시공 AI 컨시어지',
@@ -26,6 +27,7 @@ export default function RootLayout({
         <link rel="icon" href="/favicon.ico" />
       </head>
       <body className="font-sans antialiased">
+        <ServerWakeup />
         <div id="root">
           {children}
         </div>

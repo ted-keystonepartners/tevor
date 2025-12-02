@@ -2,6 +2,7 @@ import { useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { Project, ProjectCreate } from '@/lib/types';
+import { ensureServerReady } from '@/lib/serverWakeup';
 import {
   useProjectActions,
   useUIActions,
@@ -33,8 +34,16 @@ export const useProject = () => {
   // 프로젝트 목록 로드 (재시도 로직 포함)
   const loadProjects = useCallback(async (retryCount = 0): Promise<void> => {
     if (retryCount === 0) {
-      setLoading({ isLoading: true, message: '프로젝트 목록을 불러오는 중...' });
+      setLoading({ isLoading: true, message: '서버 연결 중...' });
       clearError();
+      
+      // 서버가 준비될 때까지 대기
+      const serverReady = await ensureServerReady();
+      if (!serverReady) {
+        console.log('⚠️ 서버 준비 중... 프로젝트 로드를 계속 시도합니다.');
+      }
+      
+      setLoading({ isLoading: true, message: '프로젝트 목록을 불러오는 중...' });
     }
 
     try {
