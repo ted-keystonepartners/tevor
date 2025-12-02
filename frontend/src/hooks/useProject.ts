@@ -44,12 +44,13 @@ export const useProject = () => {
     } catch (error) {
       console.error(`프로젝트 목록 로딩 실패 (시도 ${retryCount + 1}/3):`, error);
       
-      // 3번까지 재시도
+      // 3번까지 재시도 (점진적 지연)
       if (retryCount < 2) {
-        console.log('2초 후 재시도합니다...');
+        const delay = (retryCount + 1) * 3000; // 3초, 6초 지연
+        console.log(`${delay/1000}초 후 재시도합니다...`);
         setTimeout(() => {
           loadProjects(retryCount + 1);
-        }, 2000);
+        }, delay);
         return;
       }
       
@@ -178,10 +179,10 @@ export const useProject = () => {
     reset(); // 전체 상태 리셋
   }, [setCurrentProject, reset]);
 
-  // 컴포넌트 마운트 시 프로젝트 목록 로드
+  // 컴포넌트 마운트 시 프로젝트 목록 로드 (한 번만)
   useEffect(() => {
     loadProjects();
-  }, [loadProjects]);
+  }, []); // 빈 배열로 변경 - 마운트 시 한 번만 실행
 
   return {
     // 상태
