@@ -39,46 +39,38 @@ if IS_ASYNC:
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
 else:
-    # For PostgreSQL, use async operations with optimized pooling
-    from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-    import asyncpg
+    # For PostgreSQL on Render, use sync with optimized settings
+    from sqlalchemy.orm import Session
     
-    # Convert to async PostgreSQL URL
-    ASYNC_DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
-    
-    # Create async engine with optimized connection pooling
-    engine = create_async_engine(
-        ASYNC_DATABASE_URL,
+    # Create sync engine with optimized pooling for Render
+    engine = create_engine(
+        DATABASE_URL, 
         echo=False,
-        pool_size=5,  # Number of connections to maintain
-        max_overflow=10,  # Maximum overflow connections
-        pool_pre_ping=True,  # Verify connections before using
-        pool_recycle=3600,  # Recycle connections after 1 hour
+        pool_size=3,  # Reduced for Render's connection limits
+        max_overflow=5,  # Reduced overflow
+        pool_pre_ping=True,  # Verify connections
+        pool_recycle=300,  # Recycle every 5 minutes
         connect_args={
-            "server_settings": {
-                "application_name": "tevor",
-                "jit": "off"  # Disable JIT for faster query startup
-            },
-            "command_timeout": 60,
-            "timeout": 30,
+            "connect_timeout": 10,
+            "options": "-c statement_timeout=30000"  # 30 second statement timeout
         }
     )
     
     SessionLocal = sessionmaker(
         engine,
-        class_=AsyncSession,
+        class_=Session,
         expire_on_commit=False,
         autocommit=False,
         autoflush=False
     )
     
-    async def get_db():
-        async with SessionLocal() as db:
-            try:
-                yield db
-            finally:
-                await db.close()
+    def get_db():
+        db = SessionLocal()
+        try:
+            yield db
+        finally:
+            db.close()
     
     async def init_db():
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
+        # Run synchronously for PostgreSQL
+        Base.metadata.create_all(bind=engine)
